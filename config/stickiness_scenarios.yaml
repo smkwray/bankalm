@@ -1,0 +1,92 @@
+transparent_run_risk:
+  missing_rank_fill: 0.50
+  components:
+    uninsured_share:
+      weight: 0.20
+      orientation: higher_is_worse
+    brokered_share:
+      weight: 0.17
+      orientation: higher_is_worse
+    list_service_share:
+      weight: 0.08
+      orientation: higher_is_worse
+    large_account_share:
+      weight: 0.10
+      orientation: higher_is_worse
+    # core_deposit_share removed: COREDEP does not exclude uninsured deposits,
+    # so high COREDEP ≠ sticky deposits (e.g., SVB had 99% COREDEP and 94% uninsured).
+    # noninterest_share removed: empirically, higher NI share correlates with higher
+    # outflow rates (DDAs are the most runnable in a bank run).
+    time_deposit_share:
+      weight: 0.05
+      orientation: higher_is_worse
+    domestic_deposit_cost:
+      weight: 0.08
+      orientation: higher_is_worse
+    dep_growth_vol_4q:
+      weight: 0.05
+      orientation: higher_is_worse
+    dep_drawdown_4q:
+      weight: 0.05
+      orientation: higher_is_worse
+
+life_scenarios:
+  baseline:
+    max_downward_adjustment_fraction: 0.60
+    category_lives_years:
+      ddt:
+        base: 4.0
+        floor: 1.0
+      trn_ex_ddt:
+        base: 2.5
+        floor: 0.50
+      mmda:
+        base: 2.0
+        floor: 0.25
+      other_savings:
+        base: 3.0
+        floor: 0.50
+
+  adverse:
+    max_downward_adjustment_fraction: 0.75
+    category_lives_years:
+      ddt:
+        base: 2.0
+        floor: 0.25
+      trn_ex_ddt:
+        base: 1.25
+        floor: 0.10
+      mmda:
+        base: 1.0
+        floor: 0.10
+      other_savings:
+        base: 1.5
+        floor: 0.10
+
+  severe:
+    max_downward_adjustment_fraction: 0.90
+    category_lives_years:
+      ddt:
+        base: 1.0
+        floor: 0.05
+      trn_ex_ddt:
+        base: 0.50
+        floor: 0.05
+      mmda:
+        base: 0.35
+        floor: 0.05
+      other_savings:
+        base: 0.75
+        floor: 0.05
+
+time_deposit_bucket_midpoints_years:
+  small_0_3m: 0.125
+  small_3_12m: 0.625
+  small_1_3y: 2.0
+  small_3plus_y: 4.0
+  large_0_3m: 0.125
+  large_3_12m: 0.625
+  large_1_3y: 2.0
+  large_3plus_y: 4.0
+
+stable_equivalent_horizon_years: 2.0

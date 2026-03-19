@@ -1,0 +1,70 @@
+# MDRM code mapping for FFIEC Call Report maturity/repricing buckets.
+# Codes with RCON prefix are domestic-only; RCFD are consolidated.
+# Use RCON for domestic banks; large banks may need RCFD.
+
+loan_maturity:
+  # Closed-end loans secured by 1st liens on 1-4 family residential RE
+  re_first_lien:
+    0_3m: RCONA564
+    3_12m: RCONA565
+    1_3y: RCONA566
+    3_5y: RCONA567
+    5_15y: RCONA568
+    15y_plus: RCONA569
+  # Other loans and leases (excluding RE-secured)
+  other_loans:
+    0_3m: RCONA570
+    3_12m: RCONA571
+    1_3y: RCONA572
+    3_5y: RCONA573
+    5_15y: RCONA574
+    15y_plus: RCONA575
+  # Consolidated versions (for large banks with foreign offices)
+  other_loans_consolidated:
+    0_3m: RCFDA570
+    3_12m: RCFDA571
+    1_3y: RCFDA572
+    3_5y: RCFDA573
+    5_15y: RCFDA574
+    15y_plus: RCFDA575
+
+time_deposit_maturity:
+  # Time deposits of $250,000 or less
+  small:
+    0_3m: RCONHK07
+    3_12m: RCONHK08
+    1_3y: RCONHK09
+    3y_plus: RCONHK10
+  # Time deposits of more than $250,000
+  large:
+    0_3m: RCONHK12
+    3_12m: RCONHK13
+    1_3y: RCONHK14
+    3y_plus: RCONHK15
+  # Time deposits of $250,000 or less with remaining maturity <= 1 year
+  small_le_1y: RCONHK11
+  # Time deposits > $250,000 with remaining maturity <= 1 year
+  large_le_1y: RCONK222
+
+borrowings_maturity:
+  fhlb_le_1y: RCON2651
+  fhlb_le_1y_consolidated: RCFD2651
+  other_borrowings_le_1y: RCONB571
+  other_borrowings_le_1y_consolidated: RCFDB571
+
+securities_maturity:
+  # Mortgage pass-through (from RCB)
+  mtge_passthru_3m_or_less: RCONA555
+  mtge_passthru_over_15y: RCONA560
+  other_mbs_3y_or_less: RCONA561
+  other_mbs_over_3y: RCONA562
+
+# Standard horizon midpoints for repricing gap calculation (years)
+horizon_midpoints:
+  0_3m: 0.125
+  3_12m: 0.625
+  1_3y: 2.0
+  3_5y: 4.0
+  5_15y: 10.0
+  15y_plus: 20.0
+  3y_plus: 5.0

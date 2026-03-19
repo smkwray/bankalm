@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fafbfd" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="bankALM — A public-data bank fragility atlas covering U.S. banks across time with deposit stickiness scenarios, ALM mismatch proxies, and run-risk screening indices.">
+  <title>bankALM — U.S. Bank Fragility Atlas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
+</head>
+<body>
+
+  <header class="header" id="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">bank<span class="logo-accent">ALM</span></a>
+      <nav class="nav" id="nav">
+        <a href="#indices" class="nav-link">Indices</a>
+        <a href="#results" class="nav-link">Results</a>
+        <a href="#about" class="nav-link">About</a>
+        <span class="nav-divider"></span>
+        <a href="league.html?index=run_risk" class="nav-panel-btn" data-panel-accent="crimson">Run Risk</a>
+        <a href="league.html?index=alm_mismatch" class="nav-panel-btn" data-panel-accent="amber">ALM Mismatch</a>
+        <a href="league.html?index=funding_fragility" class="nav-panel-btn" data-panel-accent="indigo">Composite</a>
+      </nav>
+      <div class="header-actions">
+        <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
+        <button class="hamburger" id="hamburger" onclick="document.getElementById('nav').classList.toggle('open')" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Hero -->
+    <section class="hero" id="hero">
+      <div class="hero-bg-pattern"></div>
+      <div class="container hero-content">
+        <div class="hero-badge">U.S. Bank Fragility Atlas</div>
+        <h1 class="hero-title">Measuring the Risks<br>Balance Sheets Reveal</h1>
+        <p class="hero-subtitle">bankALM uses only free public data to screen deposit fragility, funding structure, and ALM mismatch for FDIC-insured banks. The output is an exploratory public-data atlas: transparent scores, scenario proxies, and quarter-aligned validation artifacts.</p>
+        <a href="#indices" class="hero-cta">Explore the Atlas <span class="cta-arrow">&darr;</span></a>
+      </div>
+      <div class="hero-scroll-hint">
+        <span>Scroll</span>
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M5 11l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </section>
+
+    <!-- Metrics -->
+    <section class="proof" id="proof">
+      <div class="container">
+        <div class="metrics-grid">
+          <div class="metric-card animate-on-scroll">
+            <div class="metric-value" id="metric-banks" data-count-to="0">&mdash;</div>
+            <div class="metric-label">Banks Covered</div>
+          </div>
+          <div class="metric-card animate-on-scroll">
+            <div class="metric-value" id="metric-quarters" data-count-to="0">&mdash;</div>
+            <div class="metric-label">Quarters of Data</div>
+          </div>
+          <div class="metric-card animate-on-scroll">
+            <div class="metric-value" id="metric-auc" data-count-to="0">&mdash;</div>
+            <div class="metric-label">Failure AUC</div>
+          </div>
+          <div class="metric-card animate-on-scroll">
+            <div class="metric-value" id="metric-failures" data-count-to="0">&mdash;</div>
+            <div class="metric-label">Failures Backtested</div>
+          </div>
+        </div>
+        <p class="proof-note" id="metric-build-note">Data build: &mdash;</p>
+      </div>
+    </section>
+
+    <div class="treasury-backdrop-bar" id="treasury-backdrop">
+      <div class="container treasury-bar-inner">
+        <span class="treasury-bar-label">Treasury Backdrop</span>
+        <span class="treasury-bar-item"><span class="treasury-bar-key">Curve</span> <span id="treasury-regime-label">&mdash;</span></span>
+        <span class="treasury-bar-item"><span class="treasury-bar-key">10Y</span> <span id="treasury-10y-level">&mdash;</span></span>
+        <span class="treasury-bar-item"><span class="treasury-bar-key">Slope</span> <span id="treasury-slope">&mdash;</span></span>
+        <span class="treasury-bar-date" id="treasury-backdrop-note"></span>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <section class="search-section" id="search">
+      <div class="container">
+        <div class="search-container">
+          <input type="text" class="search-input" id="search-input" placeholder="Search banks by name or CERT number..." autocomplete="off">
+          <div class="search-results" id="search-results"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Risk Indices -->
+    <section class="panels-section" id="indices">
+      <div class="container">
+        <div class="section-header">
+          <h2>Risk Indices</h2>
+          <p class="section-subtitle">Three complementary lenses on bank fragility. Each index captures a different dimension of structural vulnerability and is scored 0&ndash;100 within peer groups using public filings.</p>
+        </div>
+        <div class="panels-grid" id="panels-grid"></div>
+      </div>
+    </section>
+
+    <!-- Why This Matters -->
+    <section class="why-section" id="why">
+      <div class="container">
+        <div class="section-header">
+          <h2>Why Bank Fragility</h2>
+        </div>
+        <div class="why-grid">
+          <div class="why-card animate-on-scroll">
+            <h3>The Blind Spot</h3>
+            <p>Most bank risk metrics focus on capital ratios and loan quality. But recent stress episodes also showed how deposit composition, funding concentration, and asset-liability mismatch can accelerate fragility once confidence breaks.</p>
+          </div>
+          <div class="why-card animate-on-scroll">
+            <h3>What We Built</h3>
+            <p>bankALM is a transparent, reproducible pipeline that scores every FDIC-insured bank on deposit stickiness, run risk, and ALM mismatch using only free public data from FDIC and FFIEC filings. No proprietary data. The transparent index layer remains primary and auditable.</p>
+          </div>
+          <div class="why-card animate-on-scroll">
+            <h3>Why It Matters</h3>
+            <p>The atlas is designed for exploratory screening, peer comparison, and scenario discussion. The supervised overlay is secondary and experimental; the transparent score and coverage metadata are the main product.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section class="results-section" id="results">
+      <div class="container">
+        <div class="section-header">
+          <h2>Backtest Results</h2>
+          <p class="section-subtitle">Quarter-aligned failure-cohort metrics and historical episode context from public data.</p>
+        </div>
+
+        <div class="panel-comparison animate-on-scroll" id="panel-comparison">
+          <h3>Index Comparison &mdash; Failure Prediction</h3>
+          <div class="comparison-grid" id="comparison-grid"></div>
+        </div>
+
+        <div class="stress-episodes animate-on-scroll" id="stress-episodes">
+          <h3>Historical Stress Episodes</h3>
+          <div class="episodes-grid" id="episodes-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section class="about-section" id="about">
+      <div class="container">
+        <div class="about-card animate-on-scroll">
+          <h2>About bankALM</h2>
+          <p>Built entirely from publicly available regulatory data: FDIC BankFind financials, FDIC Summary of Deposits, FFIEC CDR Call Reports, FDIC failure records, and Treasury.gov yield history. Treasury rate-history features are currently part of the recent-history enriched panel rather than the full-history core panel.</p>
+          <p>This is independent research. It is not affiliated with or endorsed by the FDIC, FFIEC, Federal Reserve, or any financial institution. Scores are computed from public filings and should not be interpreted as supervisory ratings or investment advice.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo">bank<span class="logo-accent">ALM</span></span>
+        <p class="footer-tagline">U.S. Bank Fragility Atlas</p>
+      </div>
+      <div class="footer-nav">
+        <div class="footer-col">
+          <h4>Atlas</h4>
+          <a href="#indices">Risk Indices</a>
+          <a href="#results">Backtest Results</a>
+          <a href="league.html">League Table</a>
+        </div>
+        <div class="footer-col">
+          <h4>Learn</h4>
+          <a href="#about">About</a>
+          <a href="#why">Why Fragility</a>
+        </div>
+        <div class="footer-col">
+          <h4>Project</h4>
+          <a href="https://github.com/smkwray/bankalm">Source Code</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Data sources: FDIC BankFind &middot; FDIC Summary of Deposits &middot; FFIEC CDR Call Reports &middot; Treasury.gov</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fafbfd" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="bankALM bank detail — risk profile and historical scores for a single FDIC-insured institution.">
+  <title>Bank Detail — bankALM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
+</head>
+<body>
+
+  <header class="header" id="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">bank<span class="logo-accent">ALM</span></a>
+      <nav class="nav" id="nav">
+        <a href="index.html#indices" class="nav-link">Indices</a>
+        <a href="index.html#results" class="nav-link">Results</a>
+        <a href="index.html#about" class="nav-link">About</a>
+        <span class="nav-divider"></span>
+        <a href="league.html?index=run_risk" class="nav-panel-btn" data-panel-accent="crimson">Run Risk</a>
+        <a href="league.html?index=alm_mismatch" class="nav-panel-btn" data-panel-accent="amber">ALM Mismatch</a>
+        <a href="league.html?index=funding_fragility" class="nav-panel-btn" data-panel-accent="indigo">Composite</a>
+      </nav>
+      <div class="header-actions">
+        <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
+        <button class="hamburger" id="hamburger" onclick="document.getElementById('nav').classList.toggle('open')" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <div class="breadcrumb">
+          <a href="index.html">bankALM</a>
+          <span class="breadcrumb-sep">/</span>
+          <a href="league.html" id="bank-breadcrumb-league">League Table</a>
+          <span class="breadcrumb-sep">/</span>
+          <span id="bank-breadcrumb-name">Bank</span>
+        </div>
+        <div class="bank-hero-header">
+          <h1 class="page-hero-title" id="bank-title">Loading...</h1>
+          <span class="peer-badge" id="bank-peer"></span>
+        </div>
+        <div class="bank-detail-score">
+          <span class="bank-detail-score-val" id="bank-score-value">&mdash;</span>
+          <div class="bank-detail-score-bar">
+            <div class="bank-detail-score-fill" id="bank-score-fill" style="width:0"></div>
+          </div>
+          <span style="font-size:0.78rem;color:var(--text-tertiary)">composite fragility</span>
+        </div>
+        <div class="bank-stats-row">
+          <div class="bank-stat">
+            <span class="bank-stat-value" id="bs-assets">&mdash;</span>
+            <span class="bank-stat-label">Total Assets</span>
+          </div>
+          <div class="bank-stat">
+            <span class="bank-stat-value" id="bs-deposits">&mdash;</span>
+            <span class="bank-stat-label">Total Deposits</span>
+          </div>
+          <div class="bank-stat">
+            <span class="bank-stat-value" id="bs-uninsured">&mdash;</span>
+            <span class="bank-stat-label">Uninsured %</span>
+          </div>
+          <div class="bank-stat">
+            <span class="bank-stat-value" id="bs-state">&mdash;</span>
+            <span class="bank-stat-label">State</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="indices-section">
+      <div class="container">
+        <h3>Index Breakdown</h3>
+        <div class="indices-grid" id="indices-grid"></div>
+      </div>
+    </section>
+
+    <section class="metadata-section">
+      <div class="container">
+        <h3>Bank Profile</h3>
+        <div class="metadata-grid" id="metadata-grid"></div>
+      </div>
+    </section>
+
+    <section class="metadata-section">
+      <div class="container">
+        <details class="treasury-detail">
+          <summary class="treasury-detail-summary">Treasury Rate Backdrop</summary>
+          <div class="metadata-grid" id="treasury-regime-grid" style="margin-top:0.75rem"></div>
+        </details>
+      </div>
+    </section>
+
+    <section class="notes-section">
+      <div class="container">
+        <div class="notes-card">
+          <h3>Methodology Notes</h3>
+          <div id="bank-notes-content"><p>Loading...</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo">bank<span class="logo-accent">ALM</span></span>
+        <p class="footer-tagline">U.S. Bank Fragility Atlas</p>
+      </div>
+      <div class="footer-nav">
+        <div class="footer-col">
+          <h4>Atlas</h4>
+          <a href="index.html#indices">Risk Indices</a>
+          <a href="index.html#results">Backtest Results</a>
+        </div>
+        <div class="footer-col">
+          <h4>Learn</h4>
+          <a href="index.html#about">About</a>
+          <a href="index.html#why">Why Fragility</a>
+        </div>
+        <div class="footer-col">
+          <h4>Project</h4>
+          <a href="https://github.com/smkwray/bankalm">Source Code</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Data sources: FDIC BankFind &middot; FDIC Summary of Deposits &middot; FFIEC CDR Call Reports &middot; Treasury.gov</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/bank.js"></script>
+</body>
+</html>

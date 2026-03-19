@@ -1,0 +1,213 @@
+# Field definition registry.
+# Tracks FDIC/FFIEC field definitions and known changes over time.
+# Use this to audit whether variable meanings have shifted between periods.
+
+fdic_financials:
+  # Deposit fields
+  DEP:
+    description: Total deposits (domestic + foreign)
+    unit: thousands
+    source: FDIC BankFind financials
+  DEPDOM:
+    description: Total domestic deposits
+    unit: thousands
+    source: FDIC BankFind financials
+  DEPFOR:
+    description: Foreign office deposits
+    unit: thousands
+    source: FDIC BankFind financials
+    note: Zero for most domestic-only banks
+  COREDEP:
+    description: Core deposits (total deposits minus brokered minus large time deposits)
+    unit: thousands
+    source: FDIC BankFind financials
+    note: FDIC-derived supervisory variable. Includes all non-brokered deposits except large time deposits.
+  DEPUNA:
+    description: Estimated uninsured deposits
+    unit: thousands
+    source: FDIC BankFind financials
+    note: Not available for all banks in all periods. Smaller banks may report zero.
+  BRO:
+    description: Brokered deposits
+    unit: thousands
+    source: FDIC BankFind financials
+  DEPLSNB:
+    description: Listing service deposits (non-brokered)
+    unit: thousands
+    source: FDIC BankFind financials
+
+  # Deposit category fields
+  DDT:
+    description: Demand deposits (transaction accounts)
+    unit: thousands
+    source: FDIC BankFind financials
+  TRN:
+    description: Total transaction accounts
+    unit: thousands
+    source: FDIC BankFind financials
+  NTRSMMDA:
+    description: Nontransaction savings — money market deposit accounts
+    unit: thousands
+    source: FDIC BankFind financials
+  NTRSOTH:
+    description: Nontransaction savings — other savings
+    unit: thousands
+    source: FDIC BankFind financials
+  NTRTIME:
+    description: Nontransaction — time deposits
+    unit: thousands
+    source: FDIC BankFind financials
+
+  # Asset and mismatch fields
+  ASSET:
+    description: Total assets
+    unit: thousands
+    source: FDIC BankFind financials
+    note: All peer_groups.yaml thresholds must use this unit (thousands).
+  ASSTLT:
+    description: Long-term assets (residual maturity > 5 years or repricing > 3 years)
+    unit: thousands
+    source: FDIC BankFind financials
+    note: FDIC-derived supervisory variable
+  VOLIAB:
+    description: Volatile liabilities
+    unit: thousands
+    source: FDIC BankFind financials
+    note: FDIC-derived supervisory variable
+  LNLSNET:
+    description: Net loans and leases
+    unit: thousands
+    source: FDIC BankFind financials
+  IDLNCORR:
+    description: Loans to core deposits ratio
+    unit: ratio
+    source: FDIC BankFind financials
+
+  # Securities fields
+  SC:
+    description: Total securities (debt + equity)
+    unit: thousands
+    source: FDIC BankFind financials
+    note: Includes equity securities. Use SCRDEBT for debt-only comparison with SCNM* buckets.
+  SCRDEBT:
+    description: Total debt securities
+    unit: thousands
+    source: FDIC BankFind financials
+    note: Proper denominator for SCNM* maturity bucket validation.
+  SCUST:
+    description: U.S. Treasury securities
+    unit: thousands
+    source: FDIC BankFind financials
+  SCAGE:
+    description: U.S. government agency and GSE obligations
+    unit: thousands
+    source: FDIC BankFind financials
+  SCPLEDGE:
+    description: Pledged securities
+    unit: thousands
+    source: FDIC BankFind financials
+
+  # Securities maturity buckets (non-mortgage debt)
+  SCNM3LES:
+    description: Non-mortgage debt securities — remaining maturity ≤ 3 months
+    unit: thousands
+    horizon: 0_3m
+  SCNM3T12:
+    description: Non-mortgage debt securities — remaining maturity 3-12 months
+    unit: thousands
+    horizon: 3_12m
+  SCNM1T3:
+    description: Non-mortgage debt securities — remaining maturity 1-3 years
+    unit: thousands
+    horizon: 1_3y
+  SCNM3T5:
+    description: Non-mortgage debt securities — remaining maturity 3-5 years
+    unit: thousands
+    horizon: 3_5y
+  SCNM5T15:
+    description: Non-mortgage debt securities — remaining maturity 5-15 years
+    unit: thousands
+    horizon: 5_15y
+  SCNMOV15:
+    description: Non-mortgage debt securities — remaining maturity > 15 years
+    unit: thousands
+    horizon: 15y_plus
+
+  # FHLB term structure
+  OTHBFHLB:
+    description: Total FHLB advances
+    unit: thousands
+    source: FDIC BankFind financials
+  OTBFH1L:
+    description: FHLB advances — remaining maturity ≤ 1 year
+    unit: thousands
+  OTBFH1T3:
+    description: FHLB advances — remaining maturity 1-3 years
+    unit: thousands
+  OTBFH3T5:
+    description: FHLB advances — remaining maturity 3-5 years
+    unit: thousands
+  OTBFHOV5:
+    description: FHLB advances — remaining maturity > 5 years
+    unit: thousands
+
+  # Flow field
+  EDEPDOMQ:
+    description: Quarterly interest expense on domestic deposits
+    unit: thousands
+    source: FDIC BankFind financials
+    note: Annualized as cost proxy via EDEPDOMQ * 4 / avg(DEPDOM)
+
+fdic_institutions:
+  CERT:
+    description: FDIC certificate number (primary bank identifier)
+    source: FDIC BankFind institutions
+  FED_RSSD:
+    description: Federal Reserve RSSD identifier
+    source: FDIC BankFind institutions
+    note: Maps to IDRSSD in FFIEC Call Reports. Canonical name in panel is RSSDID.
+  RSSDHCR:
+    description: RSSD ID of the top regulatory holding company
+    source: FDIC BankFind institutions
+  NAME:
+    description: Institution name
+    source: FDIC BankFind institutions
+    note: Canonical name in panel is NAMEFULL.
+
+fdic_sod:
+  DEPSUMBR:
+    description: Branch-level deposits (June 30 snapshot)
+    unit: thousands
+    source: FDIC BankFind sod
+  STALPBR:
+    description: Branch state (2-letter abbreviation)
+    source: FDIC BankFind sod
+    note: Use STALPBR (branch state) not STALP (bank HQ state) for geographic analysis.
+  CNTYNAMB:
+    description: Branch county name
+    source: FDIC BankFind sod
+  BRNUM:
+    description: Branch number
+    source: FDIC BankFind sod
+
+ffiec_call_report:
+  IDRSSD:
+    description: Federal Reserve RSSD identifier (join key to FDIC FED_RSSD)
+    source: FFIEC CDR Call Report bulk TSV
+  note: |
+    MDRM code prefixes:
+    - RCON = domestic offices only (use for most banks)
+    - RCFD = consolidated including foreign offices (use for large multinationals)
+    Per-row RCON→RCFD fallback implemented in ffiec_repricing.py.
+
+known_definition_changes:
+  - field: DEPUNA
+    period_affected: pre-2009
+    change: Reporting methodology changed. Earlier periods may undercount uninsured.
+  - field: IDDEPLAM
+    period_affected: pre-2010
+    change: $100K threshold replaced by $250K threshold. Use IDCD* variables (modern) vs CD* (legacy).
+  - field: COREDEP
+    period_affected: all
+    change: FDIC definition includes all non-brokered deposits except large time. Does NOT exclude uninsured.
+    note: A bank can have 99% COREDEP and 94% DEPUNA simultaneously (like SVB).

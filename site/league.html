@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fafbfd" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="bankALM league table — ranked bank risk scores across all FDIC-insured institutions.">
+  <title>League Table — bankALM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
+</head>
+<body>
+
+  <header class="header" id="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">bank<span class="logo-accent">ALM</span></a>
+      <nav class="nav" id="nav">
+        <a href="index.html#indices" class="nav-link">Indices</a>
+        <a href="index.html#results" class="nav-link">Results</a>
+        <a href="index.html#about" class="nav-link">About</a>
+        <span class="nav-divider"></span>
+        <a href="league.html?index=run_risk" class="nav-panel-btn" data-panel-accent="crimson">Run Risk</a>
+        <a href="league.html?index=alm_mismatch" class="nav-panel-btn" data-panel-accent="amber">ALM Mismatch</a>
+        <a href="league.html?index=funding_fragility" class="nav-panel-btn" data-panel-accent="indigo">Composite</a>
+      </nav>
+      <div class="header-actions">
+        <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
+        <button class="hamburger" id="hamburger" onclick="document.getElementById('nav').classList.toggle('open')" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <div class="breadcrumb">
+          <a href="index.html">bankALM</a>
+          <span class="breadcrumb-sep">/</span>
+          <span id="league-breadcrumb">League Table</span>
+        </div>
+        <h1 class="page-hero-title" id="league-title">Loading...</h1>
+        <p class="page-hero-desc" id="league-desc"></p>
+        <div class="page-hero-metrics">
+          <div class="page-metric">
+            <span class="page-metric-value" id="lh-banks">&mdash;</span>
+            <span class="page-metric-label">Banks</span>
+          </div>
+          <div class="page-metric">
+            <span class="page-metric-value" id="lh-auc">&mdash;</span>
+            <span class="page-metric-label">Failure AUC</span>
+          </div>
+          <div class="page-metric">
+            <span class="page-metric-value" id="lh-recall">&mdash;</span>
+            <span class="page-metric-label">Recall @20%</span>
+          </div>
+          <div class="page-metric">
+            <span class="page-metric-value" id="lh-failures">&mdash;</span>
+            <span class="page-metric-label">Failures Tested</span>
+          </div>
+        </div>
+        <details class="treasury-detail" id="league-regime-card">
+          <summary class="treasury-detail-summary">Treasury Backdrop</summary>
+          <p class="treasury-detail-text" id="league-regime-text">Loading macro backdrop...</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="panel-content" style="padding-top:2rem">
+      <div class="container">
+        <div class="domain-filters" id="peer-filters"></div>
+        <div class="filter-bar">
+          <input type="text" class="search-input" id="table-search" placeholder="Search banks..." autocomplete="off">
+          <span class="result-count" id="result-count"></span>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table" id="league-table">
+            <thead>
+              <tr>
+                <th data-sort="rank">Rank <span class="sort-icon">&udarr;</span></th>
+                <th data-sort="name">Bank <span class="sort-icon">&udarr;</span></th>
+                <th data-sort="score" class="sort-desc">Score <span class="sort-icon">&udarr;</span></th>
+                <th data-sort="peer_group">Peer Group <span class="sort-icon">&udarr;</span></th>
+                <th data-sort="assets">Assets ($B) <span class="sort-icon">&udarr;</span></th>
+                <th data-sort="uninsured_pct">Uninsured % <span class="sort-icon">&udarr;</span></th>
+                <th data-sort="state">State <span class="sort-icon">&udarr;</span></th>
+              </tr>
+            </thead>
+            <tbody id="league-tbody">
+              <tr><td colspan="7" class="table-empty">Loading banks...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination">
+          <button class="pagination-btn" id="page-prev" disabled>&laquo; Prev</button>
+          <span class="pagination-info" id="page-info"></span>
+          <button class="pagination-btn" id="page-next">Next &raquo;</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo">bank<span class="logo-accent">ALM</span></span>
+        <p class="footer-tagline">U.S. Bank Fragility Atlas</p>
+      </div>
+      <div class="footer-nav">
+        <div class="footer-col">
+          <h4>Atlas</h4>
+          <a href="index.html#indices">Risk Indices</a>
+          <a href="index.html#results">Backtest Results</a>
+        </div>
+        <div class="footer-col">
+          <h4>Learn</h4>
+          <a href="index.html#about">About</a>
+          <a href="index.html#why">Why Fragility</a>
+        </div>
+        <div class="footer-col">
+          <h4>Project</h4>
+          <a href="https://github.com/smkwray/bankalm">Source Code</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Data sources: FDIC BankFind &middot; FDIC Summary of Deposits &middot; FFIEC CDR Call Reports &middot; Treasury.gov</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/league.js"></script>
+</body>
+</html>

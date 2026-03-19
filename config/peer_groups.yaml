@@ -1,0 +1,15 @@
+# FDIC reports ASSET in thousands of dollars.
+# Thresholds below are in the same unit (thousands).
+peer_groups:
+  - name: community
+    min_assets: 0
+    max_assets: 1000000        # < $1B
+  - name: regional
+    min_assets: 1000000
+    max_assets: 10000000       # $1B – $10B
+  - name: large_regional
+    min_assets: 10000000
+    max_assets: 100000000      # $10B – $100B
+  - name: very_large
+    min_assets: 100000000      # > $100B
+    max_assets: null

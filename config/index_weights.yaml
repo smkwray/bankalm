@@ -1,0 +1,16 @@
+alm_mismatch_components:
+  long_term_assets_to_stable_funding_baseline: 0.30
+  volatile_to_liquid_lower: 0.30
+  security_vs_deposit_gap_baseline: 0.20
+  loans_to_core_deposits: 0.10
+  short_fhlb_share: 0.10
+
+treasury_buffer_components:
+  treasury_to_uninsured_after_100bp: 0.35
+  treasury_agency_to_runnable: 0.35
+  hqla_narrow_lower_to_runnable: 0.30
+
+composite_fragility_weights:
+  run_risk_index: 0.40
+  alm_mismatch_index: 0.40
+  inverse_treasury_buffer_index: 0.20

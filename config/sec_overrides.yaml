@@ -1,0 +1,20 @@
+# Manual CERT → SEC CIK/ticker overrides for known bank → holding company mappings.
+# Use this when the automated fuzzy matcher fails because the bank subsidiary name
+# differs significantly from the SEC-registered holding company name.
+overrides:
+  # JPMorgan Chase Bank NA → JPMorgan Chase & Co
+  628:
+    cik: 19617
+    ticker: JPM
+  # Bank of America NA → Bank of America Corp
+  3510:
+    cik: 70858
+    ticker: BAC
+  # BOKF NA → BOK Financial Corp
+  4214:
+    cik: 875357
+    ticker: BOKF
+  # Frost Bank → Culberson Frost Bankers Inc
+  5510:
+    cik: 39263
+    ticker: CFR

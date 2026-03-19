@@ -1,0 +1,46 @@
+
+# Agent orchestration / internal docs
+do/
+docs/
+prompts/
+
+# Reference data (large Excel/CSV not for repo)
+reference/
+
+# Data artifacts (downloaded + processed)
+/data/
+!site/data/
+
+# Environment
+.env
+
+# Plans
+*.plan.md
+plan.md
+plans/
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# Playwright MCP
+.playwright-mcp/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# Screenshots (Playwright artifacts)
+*.png
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/

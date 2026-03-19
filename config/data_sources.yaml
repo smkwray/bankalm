@@ -1,0 +1,135 @@
+sources:
+  ffiec_call_report_bulk:
+    category: core
+    granularity: bank-quarter
+    frequency: quarterly
+    url: https://cdr.ffiec.gov/public/DownloadBulkData.aspx
+    script: scripts/download_ffiec_call_reports.py
+    notes:
+      - Raw schedule-level U.S. Call Report data.
+      - Use when you want finer repricing/maturity buckets, derivatives, sweep and reciprocal detail, or exact schedule reproducibility.
+
+  fdic_bankfind_financials:
+    category: core
+    granularity: bank-quarter
+    frequency: quarterly
+    url: https://api.fdic.gov/banks/docs
+    endpoint: https://banks.data.fdic.gov/api/financials
+    script: scripts/download_fdic_bankfind.py
+    notes:
+      - Strong baseline source for deposits, securities, uninsured deposits, brokered deposits, core deposits, long-term assets, volatile liabilities, FHLB buckets, and expense flows.
+      - A practical first version of this project can be built almost entirely from this endpoint.
+
+  fdic_bankfind_institutions:
+    category: core
+    granularity: bank-as-of-date
+    frequency: rolling
+    url: https://api.fdic.gov/banks/docs
+    endpoint: https://banks.data.fdic.gov/api/institutions
+    script: scripts/download_fdic_bankfind.py
+    notes:
+      - Useful for identifiers, charter class, location, and other institution metadata.
+
+  fdic_bankfind_sod:
+    category: core
+    granularity: branch-year
+    frequency: annual
+    url: https://api.fdic.gov/banks/docs
+    endpoint: https://banks.data.fdic.gov/api/sod
+    script: scripts/download_fdic_bankfind.py
+    notes:
+      - Use to build franchise/geographic diversification metrics and local deposit concentration measures.
+
+  fdic_bankfind_history:
+    category: optional
+    granularity: event-level
+    frequency: rolling
+    url: https://api.fdic.gov/banks/docs
+    endpoint: https://banks.data.fdic.gov/api/history
+    script: scripts/download_fdic_bankfind.py
+    notes:
+      - Structure-change history for merger/failure/pro forma handling.
+
+  fdic_bankfind_locations:
+    category: optional
+    granularity: branch-level
+    frequency: rolling
+    url: https://api.fdic.gov/banks/docs
+    endpoint: https://banks.data.fdic.gov/api/locations
+    script: scripts/download_fdic_bankfind.py
+    notes:
+      - Supplemental branch metadata.
+
+  fdic_bankfind_demographics:
+    category: optional
+    granularity: county-year or geography-year
+    frequency: annual
+    url: https://api.fdic.gov/banks/docs
+    endpoint: https://banks.data.fdic.gov/api/demographics
+    script: scripts/download_fdic_bankfind.py
+    notes:
+      - Optional geographic demand-side overlays.
+
+  nic_structure_download:
+    category: core
+    granularity: institution / branch / relationship snapshots
+    frequency: periodic
+    url: https://www.ffiec.gov/npw/FinancialReport/DataDownload
+    script: scripts/download_nic_structure.py
+    notes:
+      - Useful for RSSD-based entity resolution and relationships.
+
+  nic_holding_company_financials:
+    category: optional
+    granularity: holding-company quarter
+    frequency: quarterly
+    url: https://www.ffiec.gov/npw/FinancialReport/FinancialDataDownload
+    script: scripts/download_nic_holding_company_financials.py
+    notes:
+      - FR Y-9C / Y-9LP / Y-9SP style holding-company financial overlay.
+
+  ffiec_fry15_snapshots:
+    category: optional
+    granularity: holding-company quarter
+    frequency: quarterly
+    url: https://www.ffiec.gov/npw/FinancialReport/FRY15Reports
+    script: scripts/download_fry15_snapshots.py
+    notes:
+      - Optional systemic/large-bank overlay.
+
+  sec_edgar_submissions:
+    category: optional
+    granularity: issuer-level
+    frequency: rolling
+    url: https://data.sec.gov/submissions/
+    script: scripts/download_sec_edgar.py
+    notes:
+      - Use for large public banks, Item 1406 uninsured-deposit disclosure, and securities-footnote detail.
+
+  sec_edgar_companyfacts:
+    category: optional
+    granularity: issuer-level
+    frequency: rolling
+    url: https://data.sec.gov/api/xbrl/companyfacts/
+    script: scripts/download_sec_edgar.py
+    notes:
+      - More useful for issuer tagging context than for the core bank panel.
+
+  treasury_daily_yield_curve:
+    category: core
+    granularity: daily market data
+    frequency: daily
+    url: https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xmlview?data=daily_treasury_yield_curve&field_tdr_date_value=YYYY
+    script: scripts/download_treasury_yields.py
+    notes:
+      - Use as the public rate environment for deposit pricing and Treasury stress overlays.
+
+  public_lcr_disclosures:
+    category: optional_manual
+    granularity: holding-company quarter
+    frequency: quarterly
+    url: investor-relations pages of covered public banking organizations
+    script: none
+    notes:
+      - Keep a manual URL registry for covered firms.
+      - Useful for validating run-off categories and public disclosure alignment.

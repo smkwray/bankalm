@@ -1,0 +1,154 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-03-19T17:32:43Z",
+  "pipeline": {
+    "bank_quarters": 96894,
+    "unique_banks": 5237,
+    "quarters": 20,
+    "date_range": "2020-03-31 \u2013 2024-12-31",
+    "failures_tested": 2221,
+    "headline_horizon_quarters": 4
+  },
+  "published_panels": {
+    "full_history_core": {
+      "bank_quarters": 461187,
+      "unique_banks": 9137,
+      "quarters": 72,
+      "date_range": "2007-03-31 \u2013 2024-12-31"
+    },
+    "recent_history_enriched": {
+      "bank_quarters": 96894,
+      "unique_banks": 5237,
+      "quarters": 20,
+      "date_range": "2020-03-31 \u2013 2024-12-31"
+    }
+  },
+  "site_panel": "recent_history_enriched",
+  "treasury_regime": {
+    "yield_date": "2024-12-31",
+    "y2": 4.25,
+    "y10": 4.58,
+    "slope_10y_3m_bp": 20.999999999999996
+  },
+  "indices": [
+    {
+      "id": "run_risk",
+      "title": "Run Risk Index",
+      "accent": "crimson",
+      "description": "Transparent screening score for funding fragility using uninsured deposits, volatile funding mix, liquidity coverage, and recent deposit weakness.",
+      "failure_auc": 0.7806505336652824,
+      "failure_recall_20": 0.5925258892390814,
+      "bank_count": 5237,
+      "headline_horizon_quarters": 4,
+      "top_banks": [
+        {
+          "name": "Capital One Bank (USA), National Association",
+          "cert": "33954",
+          "score": 100.0,
+          "peer_group": "very_large"
+        },
+        {
+          "name": "Lineage Bank",
+          "cert": "6100",
+          "score": 100.0,
+          "peer_group": "community"
+        },
+        {
+          "name": "Goldman Sachs Bank USA",
+          "cert": "33124",
+          "score": 100.0,
+          "peer_group": "very_large"
+        }
+      ]
+    },
+    {
+      "id": "alm_mismatch",
+      "title": "ALM Mismatch Index",
+      "accent": "amber",
+      "description": "Structural balance-sheet mismatch proxy built from public call-report ratios. This is a heuristic scenario lens, not a full internal ALM model.",
+      "failure_auc": 0.5593944200309715,
+      "failure_recall_20": 0.2593426384511481,
+      "bank_count": 5237,
+      "headline_horizon_quarters": 4,
+      "top_banks": [
+        {
+          "name": "Luana Savings Bank",
+          "cert": "253",
+          "score": 95.77386602423316,
+          "peer_group": "regional"
+        },
+        {
+          "name": "The Farmers & Merchants Bank",
+          "cert": "15779",
+          "score": 94.27907116503138,
+          "peer_group": "community"
+        },
+        {
+          "name": "First Federal Savings Bank",
+          "cert": "31516",
+          "score": 92.93506436245274,
+          "peer_group": "community"
+        }
+      ]
+    },
+    {
+      "id": "funding_fragility",
+      "title": "Composite Fragility Index",
+      "accent": "indigo",
+      "description": "Peer-normalized composite of the transparent run-risk, ALM-mismatch, and Treasury-buffer indices for exploratory public-data screening.",
+      "failure_auc": 0.7351289755325104,
+      "failure_recall_20": 0.5078793336334985,
+      "bank_count": 5237,
+      "headline_horizon_quarters": 4,
+      "top_banks": [
+        {
+          "name": "The Farmers & Merchants Bank",
+          "cert": "15779",
+          "score": 91.93329077782045,
+          "peer_group": "community"
+        },
+        {
+          "name": "Shoreham Bank",
+          "cert": "27417",
+          "score": 91.13528557717669,
+          "peer_group": "community"
+        },
+        {
+          "name": "DR Bank",
+          "cert": "58257",
+          "score": 90.62492522935581,
+          "peer_group": "community"
+        }
+      ]
+    }
+  ],
+  "peer_groups": [
+    {
+      "id": "community",
+      "label": "Community",
+      "count": 4075
+    },
+    {
+      "id": "regional",
+      "label": "Regional",
+      "count": 976
+    },
+    {
+      "id": "large_regional",
+      "label": "Large Regional",
+      "count": 149
+    },
+    {
+      "id": "very_large",
+      "label": "Very Large",
+      "count": 37
+    }
+  ],
+  "stress_episodes": [],
+  "methodology_notes": {
+    "positioning": "Exploratory public-data fragility screen, not a decision-grade failure predictor.",
+    "supervised_overlay": "Experimental secondary overlay trained on next-quarter deposit weakness.",
+    "deposit_life": "Deposit-life outputs are scenario proxies, not empirical decay estimates.",
+    "alm": "ALM outputs are structural public-data heuristics, not a bank's internal risk system."
+  }
+}
