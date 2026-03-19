@@ -432,6 +432,10 @@ strong { font-weight: 600; }
   border: 1px solid var(--border);
 }
 
+.treasury-detail-text strong {
+  color: var(--text);
+}
+
 /* ── Pagination ───────────────────────────── */
 .pagination {
   display: flex;
@@ -730,6 +734,28 @@ strong { font-weight: 600; }
   font-size: 0.9rem;
   color: var(--text-secondary);
   line-height: 1.7;
+}
+.method-card ul {
+  margin-top: 0.85rem;
+  padding-left: 1.1rem;
+  color: var(--text-secondary);
+}
+.method-card li {
+  margin-bottom: 0.45rem;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+.method-formula {
+  margin-top: 0.85rem;
+  padding: 0.8rem 0.9rem;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--text);
+  overflow-x: auto;
 }
 
 /* ── About ─────────────────────────────────── */
@@ -1134,12 +1160,113 @@ strong { font-weight: 600; }
   padding: 2rem;
   max-width: 700px;
 }
+.methodology-card-wide {
+  max-width: none;
+}
+.league-methodology-card {
+  margin-bottom: 1.5rem;
+}
 .notes-card h3 { margin-bottom: 1rem; }
 .notes-card p {
   font-size: 0.92rem;
   color: var(--text-secondary);
   line-height: 1.7;
   margin-bottom: 0.75rem;
+}
+.method-inline-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 0.9rem 1.5rem;
+  margin-top: 1rem;
+}
+.method-inline-item {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.method-inline-item strong {
+  color: var(--text);
+}
+.score-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.breakdown-card {
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+.breakdown-card h4 {
+  font-size: 0.92rem;
+  margin-bottom: 0.3rem;
+}
+.breakdown-card-note {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  margin-bottom: 0.85rem;
+}
+.component-list {
+  display: grid;
+  gap: 0.55rem;
+}
+.component-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+  font-size: 0.84rem;
+}
+.component-name {
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+.component-metric {
+  flex-shrink: 0;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.component-meta {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+.driver-card {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.driver-card h4 {
+  font-size: 0.88rem;
+  margin-bottom: 0.65rem;
+}
+.driver-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.driver-pill {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-sunken);
+  min-width: 180px;
+}
+.driver-pill strong {
+  font-size: 0.8rem;
+}
+.driver-pill span {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Responsive ────────────────────────────── */

@@ -10,6 +10,108 @@ import numpy as np
 import pandas as pd
 
 
+RUN_RISK_COMPONENTS = [
+    {"key": "uninsured_share", "label": "Uninsured deposits", "weight": 0.20, "rank_col": "RANK_UNINSURED_SHARE"},
+    {"key": "brokered_share", "label": "Brokered deposits", "weight": 0.17, "rank_col": "RANK_BROKERED_SHARE"},
+    {"key": "list_service_share", "label": "List-service deposits", "weight": 0.08, "rank_col": "RANK_LIST_SERVICE_SHARE"},
+    {"key": "large_account_share", "label": "Large-account concentration", "weight": 0.10, "rank_col": "RANK_LARGE_ACCOUNT_SHARE"},
+    {"key": "time_deposit_share", "label": "Time-deposit share", "weight": 0.05, "rank_col": "RANK_TIME_DEPOSIT_SHARE"},
+    {"key": "domestic_deposit_cost", "label": "Domestic deposit cost", "weight": 0.08, "rank_col": "RANK_DOMESTIC_DEPOSIT_COST"},
+    {"key": "dep_growth_vol_4q", "label": "Deposit-growth volatility", "weight": 0.05, "rank_col": "RANK_DEP_GROWTH_VOL_4Q"},
+    {"key": "dep_drawdown_4q", "label": "Deposit drawdown", "weight": 0.05, "rank_col": "RANK_DEP_DRAWDOWN_4Q"},
+]
+
+ALM_COMPONENTS = [
+    {
+        "key": "long_term_assets_to_stable_funding_baseline",
+        "label": "Long-term assets / stable funding",
+        "weight": 0.30,
+        "contrib_col": "ALM_MISMATCH_INDEX_CONTRIB_LONG_TERM_ASSETS_TO_STABLE_FUNDING_BASELINE",
+    },
+    {
+        "key": "volatile_to_liquid_lower",
+        "label": "Volatile funding / liquid assets",
+        "weight": 0.30,
+        "contrib_col": "ALM_MISMATCH_INDEX_CONTRIB_VOLATILE_TO_LIQUID_LOWER",
+    },
+    {
+        "key": "security_vs_deposit_gap_baseline",
+        "label": "Securities / deposit gap",
+        "weight": 0.20,
+        "contrib_col": "ALM_MISMATCH_INDEX_CONTRIB_SECURITY_VS_DEPOSIT_GAP_BASELINE",
+    },
+    {
+        "key": "loans_to_core_deposits",
+        "label": "Loans / core deposits",
+        "weight": 0.10,
+        "contrib_col": "ALM_MISMATCH_INDEX_CONTRIB_LOANS_TO_CORE_DEPOSITS",
+    },
+    {
+        "key": "short_fhlb_share",
+        "label": "Short FHLB funding share",
+        "weight": 0.10,
+        "contrib_col": "ALM_MISMATCH_INDEX_CONTRIB_SHORT_FHLB_SHARE",
+    },
+]
+
+TREASURY_BUFFER_COMPONENTS = [
+    {
+        "key": "treasury_to_uninsured_after_100bp",
+        "label": "Treasuries / uninsured after 100 bp shock",
+        "weight": 0.35,
+        "contrib_col": "TREASURY_BUFFER_INDEX_CONTRIB_TREASURY_TO_UNINSURED_AFTER_100BP",
+    },
+    {
+        "key": "treasury_agency_to_runnable",
+        "label": "Treasury-agency / runnable funding",
+        "weight": 0.35,
+        "contrib_col": "TREASURY_BUFFER_INDEX_CONTRIB_TREASURY_AGENCY_TO_RUNNABLE",
+    },
+    {
+        "key": "hqla_narrow_lower_to_runnable",
+        "label": "Narrow HQLA / runnable funding",
+        "weight": 0.30,
+        "contrib_col": "TREASURY_BUFFER_INDEX_CONTRIB_HQLA_NARROW_LOWER_TO_RUNNABLE",
+    },
+]
+
+COMPOSITE_COMPONENTS = [
+    {"key": "run_risk_index", "label": "Run Risk Index", "weight": 0.40},
+    {"key": "alm_mismatch_index", "label": "ALM Mismatch Index", "weight": 0.40},
+    {"key": "inverse_treasury_buffer_index", "label": "Inverse Treasury Buffer", "weight": 0.20},
+]
+
+INDEX_METHODOLOGY = {
+    "run_risk": {
+        "title": "Run Risk Index",
+        "summary": "Percentile rank of the transparent run-risk score within the same quarter and asset-size peer group.",
+        "formula": "RUN_RISK_INDEX = percentile rank of RUN_RISK_SCORE within REPDTE x PEER_GROUP",
+        "scale_note": "Higher means more fragile funding within the peer group.",
+        "components": RUN_RISK_COMPONENTS,
+    },
+    "alm_mismatch": {
+        "title": "ALM Mismatch Index",
+        "summary": "Weighted percentile composite of structural public-data ALM mismatch proxies within the same quarter and peer group.",
+        "formula": "ALM_MISMATCH_INDEX = weighted percentile composite within REPDTE x PEER_GROUP",
+        "scale_note": "Higher means larger structural mismatch by public-data proxy.",
+        "components": ALM_COMPONENTS,
+    },
+    "funding_fragility": {
+        "title": "Composite Fragility Index",
+        "summary": "Weighted mix of run risk, ALM mismatch, and the inverse of Treasury buffer strength.",
+        "formula": "0.40 x RUN_RISK_INDEX + 0.40 x ALM_MISMATCH_INDEX + 0.20 x (100 - TREASURY_BUFFER_INDEX)",
+        "scale_note": "Higher means more overall fragility on the transparent public-data screen.",
+        "components": COMPOSITE_COMPONENTS,
+    },
+    "treasury_buffer": {
+        "title": "Treasury Buffer Index",
+        "summary": "Weighted percentile composite of public liquidity buffer ratios within the same quarter and peer group.",
+        "formula": "TREASURY_BUFFER_INDEX = weighted percentile composite within REPDTE x PEER_GROUP",
+        "scale_note": "Higher means stronger public Treasury/HQLA buffer, which lowers composite fragility.",
+        "components": TREASURY_BUFFER_COMPONENTS,
+    },
+}
+
 SITE_INDEX_META = {
     "run_risk": {
         "score_col": "RUN_RISK_INDEX",
@@ -142,6 +244,80 @@ def _json_safe(value: Any) -> Any:
     return value
 
 
+def _json_safe_nested(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(k): _json_safe_nested(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_json_safe_nested(v) for v in value]
+    return _json_safe(value)
+
+
+def _build_run_risk_components(row: pd.Series) -> list[dict[str, Any]]:
+    total_weight = sum(float(spec["weight"]) for spec in RUN_RISK_COMPONENTS)
+    components: list[dict[str, Any]] = []
+    for spec in RUN_RISK_COMPONENTS:
+        rank_value = pd.to_numeric(row.get(spec["rank_col"]), errors="coerce")
+        if pd.isna(rank_value):
+            continue
+        percentile = 100.0 * float(rank_value)
+        contribution = percentile * float(spec["weight"]) / total_weight
+        components.append(
+            {
+                "key": spec["key"],
+                "label": spec["label"],
+                "weight": float(spec["weight"]),
+                "percentile": percentile,
+                "contribution": contribution,
+            }
+        )
+    return components
+
+
+def _build_contribution_components(row: pd.Series, specs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    components: list[dict[str, Any]] = []
+    for spec in specs:
+        contribution = pd.to_numeric(row.get(spec["contrib_col"]), errors="coerce")
+        if pd.isna(contribution):
+            continue
+        components.append(
+            {
+                "key": spec["key"],
+                "label": spec["label"],
+                "weight": float(spec["weight"]),
+                "contribution": float(contribution),
+            }
+        )
+    return components
+
+
+def _build_composite_components(row: pd.Series) -> list[dict[str, Any]]:
+    run_risk = pd.to_numeric(row.get("RUN_RISK_INDEX"), errors="coerce")
+    alm = pd.to_numeric(row.get("ALM_MISMATCH_INDEX"), errors="coerce")
+    treasury_buffer = pd.to_numeric(row.get("TREASURY_BUFFER_INDEX"), errors="coerce")
+    treasury_inverse = np.nan if pd.isna(treasury_buffer) else 100.0 - float(treasury_buffer)
+    values = {
+        "run_risk_index": run_risk,
+        "alm_mismatch_index": alm,
+        "inverse_treasury_buffer_index": treasury_inverse,
+    }
+
+    components: list[dict[str, Any]] = []
+    for spec in COMPOSITE_COMPONENTS:
+        value = values[spec["key"]]
+        if pd.isna(value):
+            continue
+        components.append(
+            {
+                "key": spec["key"],
+                "label": spec["label"],
+                "weight": float(spec["weight"]),
+                "score": float(value),
+                "contribution": float(spec["weight"]) * float(value),
+            }
+        )
+    return components
+
+
 def _metric_row(validation_metrics: pd.DataFrame | None, score_col: str, horizon_quarters: int) -> pd.Series | None:
     if validation_metrics is None or validation_metrics.empty:
         return None
@@ -249,6 +425,7 @@ def build_site_manifest(
             }
         ),
         "indices": indices,
+        "index_methodology": _json_safe_nested(INDEX_METHODOLOGY),
         "peer_groups": peer_groups,
         "stress_episodes": [],
         "methodology_notes": {
@@ -263,25 +440,37 @@ def build_site_manifest(
 def build_league_rows(mart: pd.DataFrame) -> list[dict[str, Any]]:
     latest = latest_bank_snapshot(mart)
     latest = latest.sort_values("FUNDING_FRAGILITY_INDEX", ascending=False) if "FUNDING_FRAGILITY_INDEX" in latest.columns else latest
+    peer_group_sizes = latest["PEER_GROUP"].fillna("unassigned").value_counts().to_dict() if "PEER_GROUP" in latest.columns else {}
 
     rows: list[dict[str, Any]] = []
     for _, row in latest.iterrows():
         deposits = row.get("DEPDOM_EFFECTIVE", row.get("DEPDOM"))
+        run_risk_components = _build_run_risk_components(row)
+        alm_components = _build_contribution_components(row, ALM_COMPONENTS)
+        treasury_buffer_components = _build_contribution_components(row, TREASURY_BUFFER_COMPONENTS)
+        composite_components = _build_composite_components(row)
         rows.append(
             {
                 "cert": _json_safe(row.get("CERT")),
                 "name": _json_safe(row.get("NAMEFULL")),
                 "peer_group": _json_safe(row.get("PEER_GROUP")),
+                "peer_group_bank_count": int(peer_group_sizes.get(row.get("PEER_GROUP"), 0)),
                 "assets": _json_safe(row.get("ASSET")),
                 "deposits": _json_safe(deposits),
                 "uninsured_pct": _json_safe(row.get("UNINSURED_SHARE")),
                 "state": _json_safe(row.get("STALP")),
                 "charter": _json_safe(row.get("BKCLASS")),
                 "repdte": _json_safe(row.get("REPDTE")),
+                "run_risk_score": _json_safe(row.get("RUN_RISK_SCORE")),
+                "stickiness_score": _json_safe(row.get("STICKINESS_SCORE")),
                 "run_risk": _json_safe(row.get("RUN_RISK_INDEX")),
                 "alm_mismatch": _json_safe(row.get("ALM_MISMATCH_INDEX")),
                 "treasury_buffer": _json_safe(row.get("TREASURY_BUFFER_INDEX")),
                 "funding_fragility": _json_safe(row.get("FUNDING_FRAGILITY_INDEX")),
+                "run_risk_components": _json_safe_nested(run_risk_components),
+                "alm_components": _json_safe_nested(alm_components),
+                "treasury_buffer_components": _json_safe_nested(treasury_buffer_components),
+                "composite_components": _json_safe_nested(composite_components),
                 "supervised_outflow_score": _json_safe(row.get("SUPERVISED_OUTFLOW_SCORE")),
                 "treasury_yield_date": _json_safe(row.get("TREASURY_YIELD_DATE")),
                 "has_treasury_yield_history": _json_safe(row.get("HAS_TREASURY_YIELD_HISTORY")),

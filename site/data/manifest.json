@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-03-19T17:32:43Z",
+  "generated_at": "2026-03-19T19:56:40Z",
   "pipeline": {
     "bank_quarters": 96894,
     "unique_banks": 5237,
@@ -122,6 +122,151 @@
       ]
     }
   ],
+  "index_methodology": {
+    "run_risk": {
+      "title": "Run Risk Index",
+      "summary": "Percentile rank of the transparent run-risk score within the same quarter and asset-size peer group.",
+      "formula": "RUN_RISK_INDEX = percentile rank of RUN_RISK_SCORE within REPDTE x PEER_GROUP",
+      "scale_note": "Higher means more fragile funding within the peer group.",
+      "components": [
+        {
+          "key": "uninsured_share",
+          "label": "Uninsured deposits",
+          "weight": 0.2,
+          "rank_col": "RANK_UNINSURED_SHARE"
+        },
+        {
+          "key": "brokered_share",
+          "label": "Brokered deposits",
+          "weight": 0.17,
+          "rank_col": "RANK_BROKERED_SHARE"
+        },
+        {
+          "key": "list_service_share",
+          "label": "List-service deposits",
+          "weight": 0.08,
+          "rank_col": "RANK_LIST_SERVICE_SHARE"
+        },
+        {
+          "key": "large_account_share",
+          "label": "Large-account concentration",
+          "weight": 0.1,
+          "rank_col": "RANK_LARGE_ACCOUNT_SHARE"
+        },
+        {
+          "key": "time_deposit_share",
+          "label": "Time-deposit share",
+          "weight": 0.05,
+          "rank_col": "RANK_TIME_DEPOSIT_SHARE"
+        },
+        {
+          "key": "domestic_deposit_cost",
+          "label": "Domestic deposit cost",
+          "weight": 0.08,
+          "rank_col": "RANK_DOMESTIC_DEPOSIT_COST"
+        },
+        {
+          "key": "dep_growth_vol_4q",
+          "label": "Deposit-growth volatility",
+          "weight": 0.05,
+          "rank_col": "RANK_DEP_GROWTH_VOL_4Q"
+        },
+        {
+          "key": "dep_drawdown_4q",
+          "label": "Deposit drawdown",
+          "weight": 0.05,
+          "rank_col": "RANK_DEP_DRAWDOWN_4Q"
+        }
+      ]
+    },
+    "alm_mismatch": {
+      "title": "ALM Mismatch Index",
+      "summary": "Weighted percentile composite of structural public-data ALM mismatch proxies within the same quarter and peer group.",
+      "formula": "ALM_MISMATCH_INDEX = weighted percentile composite within REPDTE x PEER_GROUP",
+      "scale_note": "Higher means larger structural mismatch by public-data proxy.",
+      "components": [
+        {
+          "key": "long_term_assets_to_stable_funding_baseline",
+          "label": "Long-term assets / stable funding",
+          "weight": 0.3,
+          "contrib_col": "ALM_MISMATCH_INDEX_CONTRIB_LONG_TERM_ASSETS_TO_STABLE_FUNDING_BASELINE"
+        },
+        {
+          "key": "volatile_to_liquid_lower",
+          "label": "Volatile funding / liquid assets",
+          "weight": 0.3,
+          "contrib_col": "ALM_MISMATCH_INDEX_CONTRIB_VOLATILE_TO_LIQUID_LOWER"
+        },
+        {
+          "key": "security_vs_deposit_gap_baseline",
+          "label": "Securities / deposit gap",
+          "weight": 0.2,
+          "contrib_col": "ALM_MISMATCH_INDEX_CONTRIB_SECURITY_VS_DEPOSIT_GAP_BASELINE"
+        },
+        {
+          "key": "loans_to_core_deposits",
+          "label": "Loans / core deposits",
+          "weight": 0.1,
+          "contrib_col": "ALM_MISMATCH_INDEX_CONTRIB_LOANS_TO_CORE_DEPOSITS"
+        },
+        {
+          "key": "short_fhlb_share",
+          "label": "Short FHLB funding share",
+          "weight": 0.1,
+          "contrib_col": "ALM_MISMATCH_INDEX_CONTRIB_SHORT_FHLB_SHARE"
+        }
+      ]
+    },
+    "funding_fragility": {
+      "title": "Composite Fragility Index",
+      "summary": "Weighted mix of run risk, ALM mismatch, and the inverse of Treasury buffer strength.",
+      "formula": "0.40 x RUN_RISK_INDEX + 0.40 x ALM_MISMATCH_INDEX + 0.20 x (100 - TREASURY_BUFFER_INDEX)",
+      "scale_note": "Higher means more overall fragility on the transparent public-data screen.",
+      "components": [
+        {
+          "key": "run_risk_index",
+          "label": "Run Risk Index",
+          "weight": 0.4
+        },
+        {
+          "key": "alm_mismatch_index",
+          "label": "ALM Mismatch Index",
+          "weight": 0.4
+        },
+        {
+          "key": "inverse_treasury_buffer_index",
+          "label": "Inverse Treasury Buffer",
+          "weight": 0.2
+        }
+      ]
+    },
+    "treasury_buffer": {
+      "title": "Treasury Buffer Index",
+      "summary": "Weighted percentile composite of public liquidity buffer ratios within the same quarter and peer group.",
+      "formula": "TREASURY_BUFFER_INDEX = weighted percentile composite within REPDTE x PEER_GROUP",
+      "scale_note": "Higher means stronger public Treasury/HQLA buffer, which lowers composite fragility.",
+      "components": [
+        {
+          "key": "treasury_to_uninsured_after_100bp",
+          "label": "Treasuries / uninsured after 100 bp shock",
+          "weight": 0.35,
+          "contrib_col": "TREASURY_BUFFER_INDEX_CONTRIB_TREASURY_TO_UNINSURED_AFTER_100BP"
+        },
+        {
+          "key": "treasury_agency_to_runnable",
+          "label": "Treasury-agency / runnable funding",
+          "weight": 0.35,
+          "contrib_col": "TREASURY_BUFFER_INDEX_CONTRIB_TREASURY_AGENCY_TO_RUNNABLE"
+        },
+        {
+          "key": "hqla_narrow_lower_to_runnable",
+          "label": "Narrow HQLA / runnable funding",
+          "weight": 0.3,
+          "contrib_col": "TREASURY_BUFFER_INDEX_CONTRIB_HQLA_NARROW_LOWER_TO_RUNNABLE"
+        }
+      ]
+    }
+  },
   "peer_groups": [
     {
       "id": "community",

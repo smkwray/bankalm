@@ -71,6 +71,32 @@ function renderHero(manifest) {
   }
 }
 
+function renderMethodology(manifest) {
+  var wrap = document.getElementById('league-methodology');
+  if (!wrap) return;
+
+  var method = (manifest.index_methodology || {})[S.indexId];
+  if (!method) {
+    wrap.innerHTML = '<p>Methodology unavailable for this index.</p>';
+    return;
+  }
+
+  var components = Array.isArray(method.components) ? method.components : [];
+  wrap.innerHTML =
+    '<p>' + method.summary + '</p>' +
+    '<div class="method-formula">' + method.formula + '</div>' +
+    '<div class="method-inline-list">' +
+      '<div class="method-inline-item"><strong>Peer normalization:</strong> banks are compared within the same report quarter and asset-size peer group.</div>' +
+      '<div class="method-inline-item"><strong>Scale:</strong> scores run from 0 to 100, where higher means more fragility for this index.</div>' +
+      '<div class="method-inline-item"><strong>Interpretation:</strong> ' + method.scale_note + '</div>' +
+    '</div>' +
+    '<div class="method-inline-list">' +
+      components.map(function (component) {
+        return '<div class="method-inline-item"><strong>' + component.label + '</strong> <span class="component-meta">weight ' + Math.round(Number(component.weight) * 100) + '%</span></div>';
+      }).join('') +
+    '</div>';
+}
+
 /* ── Peer Group Filters ──────────────────── */
 function renderFilters(manifest) {
   var el = document.getElementById('peer-filters');
@@ -226,6 +252,7 @@ function init() {
 
     S.filtered = S.banks.slice();
     renderHero(manifest);
+    renderMethodology(manifest);
     renderFilters(manifest);
     sortBanks();
     renderTable();

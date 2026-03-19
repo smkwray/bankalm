@@ -194,6 +194,32 @@ function renderIndexCards(manifest) {
   });
 }
 
+function renderMethodology(manifest) {
+  var grid = document.getElementById('methodology-grid');
+  if (!grid) return;
+
+  var methods = manifest.index_methodology || {};
+  var order = ['run_risk', 'alm_mismatch', 'funding_fragility'];
+
+  grid.innerHTML = order.map(function (id) {
+    var method = methods[id];
+    if (!method) return '';
+    var components = Array.isArray(method.components) ? method.components : [];
+    return '<article class="method-card animate-on-scroll">' +
+      '<h3>' + method.title + '</h3>' +
+      '<p>' + method.summary + '</p>' +
+      '<div class="method-formula">' + method.formula + '</div>' +
+      '<ul>' +
+        components.map(function (component) {
+          var weight = component.weight != null ? Math.round(Number(component.weight) * 100) + '%' : '\u2014';
+          return '<li><strong>' + component.label + '</strong> <span class="component-meta">weight ' + weight + '</span></li>';
+        }).join('') +
+      '</ul>' +
+      '<p>' + method.scale_note + '</p>' +
+    '</article>';
+  }).join('');
+}
+
 /* ── Render: Index Comparison ────────────────── */
 function renderComparison(manifest) {
   var grid = document.getElementById('comparison-grid');
@@ -324,6 +350,7 @@ function init() {
     renderHeroMetrics(manifest);
     renderTreasuryBackdrop(manifest);
     renderIndexCards(manifest);
+    renderMethodology(manifest);
     renderComparison(manifest);
     renderEpisodes(manifest);
     initScrollAnimations();

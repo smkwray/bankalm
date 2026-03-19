@@ -16,6 +16,10 @@ function fmtBp(n) {
   if (n == null || Number.isNaN(Number(n))) return '\u2014';
   return Number(n).toFixed(0) + ' bp';
 }
+function fmtScore(n) {
+  if (n == null || Number.isNaN(Number(n))) return '\u2014';
+  return Number(n).toFixed(1);
+}
 function fmtPeerGroup(id) {
   var map = { community: 'Community', regional: 'Regional', large_regional: 'Large Regional', very_large: 'Very Large' };
   return map[id] || id;
@@ -35,8 +39,94 @@ function fmtDollars(thousands) {
 }
 function getParam(k) { return new URLSearchParams(location.search).get(k); }
 
+function renderComponentRows(components, mode) {
+  if (!Array.isArray(components) || components.length === 0) {
+    return '<p class="breakdown-card-note">Component detail unavailable for this bank-quarter.</p>';
+  }
+  return '<div class="component-list">' + components.map(function (component) {
+    var right = '';
+    if (mode === 'run_risk') {
+      right = fmtScore(component.contribution) + ' pts' +
+        '<span class="component-meta">' + fmtScore(component.percentile) + ' peer pct</span>';
+    } else if (mode === 'composite') {
+      right = fmtScore(component.contribution) + ' pts' +
+        '<span class="component-meta">weight ' + Math.round(Number(component.weight) * 100) + '% • score ' + fmtScore(component.score) + '</span>';
+    } else {
+      right = fmtScore(component.contribution) + ' pts' +
+        '<span class="component-meta">weight ' + Math.round(Number(component.weight) * 100) + '%</span>';
+    }
+    return '<div class="component-row">' +
+      '<div class="component-name">' + component.label + '</div>' +
+      '<div class="component-metric">' + right + '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function renderScoreConstruction(bank, manifest) {
+  var summary = document.getElementById('bank-score-summary');
+  var grid = document.getElementById('score-breakdown-grid');
+  var drivers = document.getElementById('bank-top-drivers');
+  var methods = manifest.index_methodology || {};
+
+  if (summary) {
+    summary.innerHTML =
+      '<p>This bank is scored against the <strong>' + fmtPeerGroup(bank.peer_group) + '</strong> peer group for <strong>' + (bank.repdte || '\u2014') + '</strong>. ' +
+      'The peer group currently contains <strong>' + fmt(bank.peer_group_bank_count || 0) + '</strong> banks in the published latest-quarter snapshot.</p>' +
+      '<p>Each score is a 0&ndash;100 percentile-style measure. Higher values mean more fragility for run risk, ALM mismatch, and the composite index. Treasury buffer is the opposite: higher means more protection.</p>';
+  }
+
+  if (grid) {
+    var cards = [
+      {
+        title: 'Run Risk Index',
+        note: (methods.run_risk && methods.run_risk.formula) || 'Percentile rank of the transparent run-risk score within the peer group.',
+        components: bank.run_risk_components,
+        mode: 'run_risk'
+      },
+      {
+        title: 'ALM Mismatch Index',
+        note: (methods.alm_mismatch && methods.alm_mismatch.formula) || 'Weighted percentile composite of structural ALM proxies.',
+        components: bank.alm_components,
+        mode: 'contrib'
+      },
+      {
+        title: 'Treasury Buffer Index',
+        note: (methods.treasury_buffer && methods.treasury_buffer.formula) || 'Weighted percentile composite of Treasury/HQLA coverage ratios.',
+        components: bank.treasury_buffer_components,
+        mode: 'contrib'
+      },
+      {
+        title: 'Composite Fragility Mix',
+        note: (methods.funding_fragility && methods.funding_fragility.formula) || 'Weighted mix of run risk, ALM mismatch, and inverse Treasury buffer.',
+        components: bank.composite_components,
+        mode: 'composite'
+      }
+    ];
+    grid.innerHTML = cards.map(function (card) {
+      return '<div class="breakdown-card">' +
+        '<h4>' + card.title + '</h4>' +
+        '<div class="breakdown-card-note">' + card.note + '</div>' +
+        renderComponentRows(card.components, card.mode) +
+      '</div>';
+    }).join('');
+  }
+
+  if (drivers) {
+    var top = (Array.isArray(bank.composite_components) ? bank.composite_components.slice() : [])
+      .sort(function (a, b) { return (b.contribution || 0) - (a.contribution || 0); })
+      .slice(0, 3);
+    drivers.innerHTML =
+      '<h4>Top composite drivers</h4>' +
+      (top.length === 0
+        ? '<p class="breakdown-card-note">Composite driver detail unavailable for this bank-quarter.</p>'
+        : '<div class="driver-list">' + top.map(function (component) {
+          return '<div class="driver-pill"><strong>' + component.label + '</strong><span>' + fmtScore(component.contribution) + ' pts</span></div>';
+        }).join('') + '</div>');
+  }
+}
+
 /* ── Render ────────────────────────────────── */
-function renderBank(bank) {
+function renderBank(bank, manifest) {
   var b = bank;
   document.title = b.name + ' \u2014 bankALM';
   document.getElementById('bank-breadcrumb-name').textContent = b.name;
@@ -125,12 +215,15 @@ function renderBank(bank) {
     notes.innerHTML =
       '<p>Scores are percentile-ranked within the <strong>' + fmtPeerGroup(b.peer_group) + '</strong> peer group. ' +
       'A score of 80+ places this bank in the top 20% of its peer group for that risk dimension.</p>' +
+      '<p>The score construction section above shows the actual weighted component contributions used in the latest published snapshot.</p>' +
       '<p>All data is sourced from FDIC BankFind quarterly filings, FDIC Summary of Deposits (annual, June 30), ' +
       'and FFIEC CDR Call Report bulk data. No proprietary data or supervisory inputs are used.</p>' +
       '<p>Deposit-life and ALM fields are public-data scenario proxies, not direct measurements of a bank\'s internal deposit behavior or full risk system.</p>' +
       '<p>The Treasury section shows the public rate backdrop observed on or before the report date. It provides macro context and is not part of the headline ranking methodology.</p>' +
       '<p>Scores reflect the most recent available quarter and should be read as exploratory screening output, not supervisory ratings or investment advice.</p>';
   }
+
+  renderScoreConstruction(b, manifest || {});
 }
 
 /* ── Init ──────────────────────────────────── */
@@ -141,10 +234,12 @@ function init() {
     return;
   }
 
-  fetchJSON('league.json').then(function (banks) {
+  Promise.all([fetchJSON('manifest.json'), fetchJSON('league.json')]).then(function (results) {
+    var manifest = results[0];
+    var banks = results[1];
     var bank = banks.find(function (b) { return String(b.cert) === cert; });
     if (!bank) throw new Error('Bank not found: CERT ' + cert);
-    renderBank(bank);
+    renderBank(bank, manifest);
   }).catch(function (e) {
     console.error(e);
     document.getElementById('bank-title').textContent = 'Error: ' + e.message;
