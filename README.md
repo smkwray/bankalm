@@ -1,12 +1,10 @@
 # U.S. Bank Deposit Stickiness & ALM Mismatch Pipeline
 
-**[smkwray.github.io/bankalm](https://smkwray.github.io/bankalm/)**
+Live site: **[smkwray.github.io/bankalm](https://smkwray.github.io/bankalm/)**
 
 ## Site
 
 The **bankALM** static site provides an interactive atlas of bank fragility scores, league tables, and bank detail pages — all generated from the pipeline's enriched panel.
-
-Live at **[smkwray.github.io/bankalm](https://smkwray.github.io/bankalm/)** | served from `site/` via GitHub Pages.
 
 - **Homepage** — hero metrics, risk index cards, backtest comparison
 - **League Table** — sortable, filterable, paginated rankings for each index (Run Risk, ALM Mismatch, Deposit Competition, Composite Fragility)
@@ -20,7 +18,7 @@ cd site && python3 -m http.server 8000
 
 ## About
 
-bankALM is an independent research project that screens U.S. bank fragility using only free public regulatory data. The live atlas is at **[smkwray.github.io/bankalm](https://smkwray.github.io/bankalm/)**.
+ bankALM is an independent research project that screens U.S. bank fragility using only free public regulatory data.
 
 It is not affiliated with or endorsed by the FDIC, FFIEC, Federal Reserve, or any financial institution. Scores are computed from public filings and should not be interpreted as supervisory ratings or investment advice.
 
