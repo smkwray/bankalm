@@ -37,6 +37,16 @@ function riskClass(score) {
   return 'risk-low';
 }
 function getParam(k) { return new URLSearchParams(location.search).get(k); }
+function scoreForIndex(bank, indexId) {
+  var scoreMap = {
+    run_risk: bank.run_risk,
+    alm_mismatch: bank.alm_mismatch,
+    treasury_buffer: bank.treasury_buffer,
+    deposit_competition: bank.deposit_competition,
+    funding_fragility: bank.funding_fragility
+  };
+  return scoreMap[indexId] || bank.funding_fragility || 0;
+}
 
 var S = {
   indexId: null, indexMeta: null,
@@ -242,11 +252,12 @@ function init() {
 
     S.indexMeta = manifest.indices.find(function (i) { return i.id === S.indexId; });
     if (!S.indexMeta) S.indexMeta = manifest.indices[0];
+    S.indexId = S.indexMeta.id;
 
     // Map the correct score field
     S.banks = banks.map(function (b) {
       var copy = Object.assign({}, b);
-      copy.score = b[S.indexId] || b.funding_fragility || 0;
+      copy.score = scoreForIndex(copy, S.indexId);
       return copy;
     }).sort(function (a, b) { return b.score - a.score; });
 

@@ -45,7 +45,8 @@ def parse_args() -> argparse.Namespace:
 
 INDEX_COLS = [
     "RUN_RISK_INDEX", "DEPOSIT_STICKINESS_INDEX", "ALM_MISMATCH_INDEX",
-    "TREASURY_BUFFER_INDEX", "FUNDING_FRAGILITY_INDEX",
+    "TREASURY_BUFFER_INDEX", "DEPOSIT_COMPETITION_PRESSURE_INDEX",
+    "DEPOSIT_COMPETITION_RESILIENCE_INDEX", "FUNDING_FRAGILITY_INDEX",
 ]
 
 FEATURE_COLS = [
@@ -56,7 +57,10 @@ FEATURE_COLS = [
     "TREASURY_AGENCY_TO_RUNNABLE", "HQLA_NARROW_LOWER_TO_RUNNABLE",
     "HAS_TREASURY_YIELD_HISTORY", "YC_2YR", "YC_10YR", "YC_10Y_2Y_SLOPE_BP",
     "SECURITY_DURATION_PROXY", "SHORT_FHLB_SHARE", "SUPERVISED_OUTFLOW_SCORE",
-    "RUN_RISK_SCORE", "STICKINESS_SCORE",
+    "RUN_RISK_SCORE", "STICKINESS_SCORE", "OUTSIDE_OPTION_RATE_BP",
+    "OUTSIDE_OPTION_PREMIUM_BP", "OUTSIDE_OPTION_PREMIUM_POS_BP",
+    "PASS_THROUGH_GAP_BP", "RATE_SENSITIVE_DEPOSIT_EXPOSURE",
+    "DEPOSIT_COMPETITION_PRESSURE_SCORE", "DEPOSIT_COMPETITION_RESILIENCE_SCORE",
 ]
 
 SCENARIO_COLS = [
@@ -117,9 +121,13 @@ def quarter_league_table(df: pd.DataFrame, quarter: str | pd.Timestamp) -> pd.Da
         return pd.DataFrame()
 
     id_cols = ["CERT", "NAMEFULL", "PEER_GROUP", "ASSET"]
-    rank_cols = INDEX_COLS + ["RUN_RISK_SCORE"]
-    feature_subset = ["UNINSURED_SHARE", "VOLATILE_TO_LIQUID_LOWER",
-                      "TREASURY_TO_UNINSURED", "LOANS_TO_CORE_DEPOSITS"]
+    rank_cols = INDEX_COLS + ["RUN_RISK_SCORE", "DEPOSIT_COMPETITION_PRESSURE_SCORE"]
+    feature_subset = [
+        "UNINSURED_SHARE", "VOLATILE_TO_LIQUID_LOWER",
+        "TREASURY_TO_UNINSURED", "LOANS_TO_CORE_DEPOSITS",
+        "OUTSIDE_OPTION_PREMIUM_BP", "PASS_THROUGH_GAP_BP",
+        "RATE_SENSITIVE_DEPOSIT_EXPOSURE",
+    ]
     cols = _available(q, id_cols + rank_cols + feature_subset)
     out = q[cols].sort_values("FUNDING_FRAGILITY_INDEX", ascending=False)
 
@@ -140,8 +148,14 @@ def peer_group_summary(df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame()
 
     group_cols = ["REPDTE", "PEER_GROUP"]
-    agg_targets = _available(df, INDEX_COLS + ["RUN_RISK_SCORE", "UNINSURED_SHARE",
-                                                "VOLATILE_TO_LIQUID_LOWER", "TREASURY_TO_UNINSURED"])
+    agg_targets = _available(
+        df,
+        INDEX_COLS + [
+            "RUN_RISK_SCORE", "UNINSURED_SHARE", "VOLATILE_TO_LIQUID_LOWER",
+            "TREASURY_TO_UNINSURED", "DEPOSIT_COMPETITION_PRESSURE_SCORE",
+            "OUTSIDE_OPTION_PREMIUM_BP", "PASS_THROUGH_GAP_BP",
+        ],
+    )
     if not agg_targets:
         return pd.DataFrame()
 

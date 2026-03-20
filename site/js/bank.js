@@ -72,7 +72,7 @@ function renderScoreConstruction(bank, manifest) {
     summary.innerHTML =
       '<p>This bank is scored against the <strong>' + fmtPeerGroup(bank.peer_group) + '</strong> peer group for <strong>' + (bank.repdte || '\u2014') + '</strong>. ' +
       'The peer group currently contains <strong>' + fmt(bank.peer_group_bank_count || 0) + '</strong> banks in the published latest-quarter snapshot.</p>' +
-      '<p>Each score is a 0&ndash;100 percentile-style measure. Higher values mean more fragility for run risk, ALM mismatch, and the composite index. Treasury buffer is the opposite: higher means more protection.</p>';
+      '<p>Each score is a 0&ndash;100 percentile-style measure. Higher values mean more fragility for run risk, ALM mismatch, deposit competition, and the composite index. Treasury buffer is the opposite: higher means more protection.</p>';
   }
 
   if (grid) {
@@ -88,6 +88,12 @@ function renderScoreConstruction(bank, manifest) {
         note: (methods.alm_mismatch && methods.alm_mismatch.formula) || 'Weighted percentile composite of structural ALM proxies.',
         components: bank.alm_components,
         mode: 'contrib'
+      },
+      {
+        title: 'Deposit Competition Index',
+        note: (methods.deposit_competition && methods.deposit_competition.formula) || 'Percentile rank of transparent outside-option pressure within the peer group.',
+        components: bank.deposit_competition_components,
+        mode: 'run_risk'
       },
       {
         title: 'Treasury Buffer Index',
@@ -150,6 +156,7 @@ function renderBank(bank, manifest) {
   var indices = [
     { id: 'run_risk', title: 'Run Risk Index', accent: 'crimson' },
     { id: 'alm_mismatch', title: 'ALM Mismatch Index', accent: 'amber' },
+    { id: 'deposit_competition_pressure', title: 'Deposit Competition', accent: 'emerald' },
     { id: 'funding_fragility', title: 'Composite Fragility', accent: 'indigo' }
   ];
   var grid = document.getElementById('indices-grid');
@@ -183,6 +190,7 @@ function renderBank(bank, manifest) {
       ['Report Date', b.repdte || '\u2014'],
       ['Run Risk', (b.run_risk || 0).toFixed(1)],
       ['ALM Mismatch', (b.alm_mismatch || 0).toFixed(1)],
+      ['Deposit Competition', (b.deposit_competition_pressure || 0).toFixed(1)],
       ['Composite Fragility', (b.funding_fragility || 0).toFixed(1)],
       ['Failed', b.failed ? 'Yes (' + b.fail_date + ')' : 'No']
     ];

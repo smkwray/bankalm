@@ -8,14 +8,15 @@ RAW     := data/raw
 PROC    := data/processed
 REPORTS := data/reports
 
-.PHONY: help test clean download-all build-all reports universe validate smoke status backtest-failures
+.PHONY: help test clean download-all download-market-rates build-all build-deposit-competition reports universe validate smoke status backtest-failures
 
 help:
 	@echo "Main targets:"
 	@echo "  universe      — download + build + report for the full bank universe"
 	@echo "  download-all  — download raw data (FDIC, SOD, FFIEC, failures, Treasury)"
 	@echo "  download-treasury  — download Treasury yield history"
-	@echo "  build-all     — build panel → stickiness → ALM → treasury → indices"
+	@echo "  download-market-rates — optional FRED market-rate history (IORB / ON RRP)"
+	@echo "  build-all     — build panel → stickiness → ALM → treasury → deposit-competition → indices"
 	@echo "  backtest-failures — run quarter-aligned failure cohort validation"
 	@echo "  reports        — generate mart, league tables, summaries, and site data"
 	@echo "  validate       — run 2023 stress validation report"
@@ -87,6 +88,12 @@ download-treasury:
 			--year $$Y --out $(RAW)/treasury/yields_$$Y.parquet; \
 	done
 
+download-market-rates:
+	$(PYTHON) scripts/download_fred_series.py \
+		--series-id IORB \
+		--series-id RRPONTSYAWARD \
+		--out $(RAW)/macro/fred_rates.parquet
+
 download-all: download-financials download-institutions download-sod download-ffiec download-failures download-treasury
 
 # ──────────────────────── FFIEC Extraction ────────────────────────
@@ -144,11 +151,19 @@ build-treasury: build-alm
 		--treasury-glob '$(RAW)/treasury/yields_*.parquet' \
 		--out $(PROC)/universe_treasury_features.parquet
 
-build-indices: build-treasury
+build-deposit-competition: build-treasury
+	$(PYTHON) scripts/build_deposit_competition_features.py \
+		--input $(PROC)/universe_treasury_features.parquet \
+		--config config/deposit_competition.yaml \
+		--market-rates $(RAW)/macro/fred_rates.parquet \
+		--out $(PROC)/universe_deposit_competition_features.parquet
+
+build-indices: build-deposit-competition
 	$(PYTHON) scripts/build_indices.py \
 		--stickiness $(PROC)/universe_deposit_stickiness.parquet \
 		--alm $(PROC)/universe_alm_features.parquet \
 		--treasury $(PROC)/universe_treasury_features.parquet \
+		--deposit-competition $(PROC)/universe_deposit_competition_features.parquet \
 		--peer-groups config/peer_groups.yaml \
 		--weights config/index_weights.yaml \
 		--out $(PROC)/universe_bank_indices.parquet

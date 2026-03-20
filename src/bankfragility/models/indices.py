@@ -16,6 +16,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--stickiness", type=Path, required=True)
     parser.add_argument("--alm", type=Path, required=True)
     parser.add_argument("--treasury", type=Path, required=True)
+    parser.add_argument("--deposit-competition", type=Path, default=None)
     parser.add_argument("--peer-groups", type=Path, required=True)
     parser.add_argument("--weights", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
@@ -23,11 +24,18 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def merge_inputs(stickiness: pd.DataFrame, alm: pd.DataFrame, treasury: pd.DataFrame) -> pd.DataFrame:
+def merge_inputs(
+    stickiness: pd.DataFrame,
+    alm: pd.DataFrame,
+    treasury: pd.DataFrame,
+    deposit_competition: pd.DataFrame | None = None,
+) -> pd.DataFrame:
     keys = ["CERT", "REPDTE"]
     base = stickiness.copy()
     base["REPDTE"] = parse_report_date(base["REPDTE"])
-    for other in (alm, treasury):
+    for other in (alm, treasury, deposit_competition):
+        if other is None:
+            continue
         other = other.copy()
         other["REPDTE"] = parse_report_date(other["REPDTE"])
         extra_cols = [col for col in other.columns if col not in keys and col not in base.columns]
@@ -105,9 +113,10 @@ def build_indices_frame(
     treasury: pd.DataFrame,
     peer_cfg: list[dict[str, object]],
     weight_cfg: dict[str, dict[str, float]],
+    deposit_competition: pd.DataFrame | None = None,
     version: str = DEFAULT_INDEX_VERSION,
 ) -> pd.DataFrame:
-    df = merge_inputs(stickiness, alm, treasury)
+    df = merge_inputs(stickiness, alm, treasury, deposit_competition)
     df["REPDTE"] = parse_report_date(df["REPDTE"])
     df["ASSET"] = pd.to_numeric(df["ASSET"], errors="coerce")
     df["PEER_GROUP"] = assign_peer_group(df["ASSET"], peer_cfg)
@@ -119,6 +128,17 @@ def build_indices_frame(
     else:
         df["RUN_RISK_INDEX"] = np.nan
     df["DEPOSIT_STICKINESS_INDEX"] = 100.0 - df["RUN_RISK_INDEX"]
+    if "DEPOSIT_COMPETITION_PRESSURE_SCORE" in df.columns:
+        df["DEPOSIT_COMPETITION_PRESSURE_INDEX"] = percentile_by_group(
+            df,
+            "DEPOSIT_COMPETITION_PRESSURE_SCORE",
+            group_cols,
+            higher_is_better=True,
+        )
+        df["DEPOSIT_COMPETITION_RESILIENCE_INDEX"] = 100.0 - df["DEPOSIT_COMPETITION_PRESSURE_INDEX"]
+    else:
+        df["DEPOSIT_COMPETITION_PRESSURE_INDEX"] = np.nan
+        df["DEPOSIT_COMPETITION_RESILIENCE_INDEX"] = np.nan
 
     weighted_index(
         df=df,
@@ -172,6 +192,7 @@ def main() -> None:
     stickiness = read_table(args.stickiness)
     alm = read_table(args.alm)
     treasury = read_table(args.treasury)
+    deposit_competition = read_table(args.deposit_competition) if args.deposit_competition else None
 
     with args.peer_groups.open("r", encoding="utf-8") as handle:
         peer_cfg = yaml.safe_load(handle)["peer_groups"]
@@ -182,6 +203,7 @@ def main() -> None:
         stickiness=stickiness,
         alm=alm,
         treasury=treasury,
+        deposit_competition=deposit_competition,
         peer_cfg=peer_cfg,
         weight_cfg=weight_cfg,
         version=args.version,

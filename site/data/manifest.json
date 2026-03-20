@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-03-19T19:56:40Z",
+  "generated_at": "2026-03-20T13:36:49Z",
   "pipeline": {
     "bank_quarters": 96894,
     "unique_banks": 5237,
@@ -88,6 +88,36 @@
           "cert": "31516",
           "score": 92.93506436245274,
           "peer_group": "community"
+        }
+      ]
+    },
+    {
+      "id": "deposit_competition",
+      "title": "Deposit Competition Index",
+      "accent": "emerald",
+      "description": "Peer-normalized pressure from safe outside options, deposit pass-through gaps, and rate-sensitive funding exposure.",
+      "failure_auc": null,
+      "failure_recall_20": null,
+      "bank_count": 5237,
+      "headline_horizon_quarters": 4,
+      "top_banks": [
+        {
+          "name": "Sutton Bank",
+          "cert": "5962",
+          "score": 100.0,
+          "peer_group": "regional"
+        },
+        {
+          "name": "Charles Schwab Bank, SSB",
+          "cert": "57450",
+          "score": 100.0,
+          "peer_group": "very_large"
+        },
+        {
+          "name": "Citizens Business Bank, National Association",
+          "cert": "21716",
+          "score": 100.0,
+          "peer_group": "large_regional"
         }
       ]
     },
@@ -214,6 +244,50 @@
           "label": "Short FHLB funding share",
           "weight": 0.1,
           "contrib_col": "ALM_MISMATCH_INDEX_CONTRIB_SHORT_FHLB_SHARE"
+        }
+      ]
+    },
+    "deposit_competition": {
+      "title": "Deposit Competition Pressure Index",
+      "summary": "Percentile rank of the transparent deposit-competition pressure score within the same quarter and peer group.",
+      "formula": "DEPOSIT_COMPETITION_PRESSURE_INDEX = percentile rank of DEPOSIT_COMPETITION_PRESSURE_SCORE within REPDTE x PEER_GROUP",
+      "scale_note": "Higher means greater pressure from safe outside options and rate-sensitive funding exposure within the peer group.",
+      "components": [
+        {
+          "key": "outside_option_premium_pos_bp",
+          "label": "Outside-option premium",
+          "weight": 0.35,
+          "rank_col": "RANK_OUTSIDE_OPTION_PREMIUM_POS_BP"
+        },
+        {
+          "key": "pass_through_gap_bp",
+          "label": "Pass-through gap",
+          "weight": 0.2,
+          "rank_col": "RANK_PASS_THROUGH_GAP_BP"
+        },
+        {
+          "key": "rate_sensitive_deposit_exposure",
+          "label": "Rate-sensitive deposit exposure",
+          "weight": 0.1,
+          "rank_col": "RANK_RATE_SENSITIVE_DEPOSIT_EXPOSURE"
+        },
+        {
+          "key": "premium_x_rate_sensitive_exposure",
+          "label": "Premium \u00d7 rate-sensitive exposure",
+          "weight": 0.2,
+          "rank_col": "RANK_PREMIUM_X_RATE_SENSITIVE_EXPOSURE"
+        },
+        {
+          "key": "premium_x_dep_drawdown_4q",
+          "label": "Premium \u00d7 deposit drawdown",
+          "weight": 0.1,
+          "rank_col": "RANK_PREMIUM_X_DEP_DRAWDOWN_4Q"
+        },
+        {
+          "key": "premium_x_short_fhlb_share",
+          "label": "Premium \u00d7 short FHLB share",
+          "weight": 0.05,
+          "rank_col": "RANK_PREMIUM_X_SHORT_FHLB_SHARE"
         }
       ]
     },

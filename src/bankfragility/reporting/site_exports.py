@@ -75,6 +75,45 @@ TREASURY_BUFFER_COMPONENTS = [
     },
 ]
 
+DEPOSIT_COMPETITION_COMPONENTS = [
+    {
+        "key": "outside_option_premium_pos_bp",
+        "label": "Outside-option premium",
+        "weight": 0.35,
+        "rank_col": "RANK_OUTSIDE_OPTION_PREMIUM_POS_BP",
+    },
+    {
+        "key": "pass_through_gap_bp",
+        "label": "Pass-through gap",
+        "weight": 0.20,
+        "rank_col": "RANK_PASS_THROUGH_GAP_BP",
+    },
+    {
+        "key": "rate_sensitive_deposit_exposure",
+        "label": "Rate-sensitive deposit exposure",
+        "weight": 0.10,
+        "rank_col": "RANK_RATE_SENSITIVE_DEPOSIT_EXPOSURE",
+    },
+    {
+        "key": "premium_x_rate_sensitive_exposure",
+        "label": "Premium × rate-sensitive exposure",
+        "weight": 0.20,
+        "rank_col": "RANK_PREMIUM_X_RATE_SENSITIVE_EXPOSURE",
+    },
+    {
+        "key": "premium_x_dep_drawdown_4q",
+        "label": "Premium × deposit drawdown",
+        "weight": 0.10,
+        "rank_col": "RANK_PREMIUM_X_DEP_DRAWDOWN_4Q",
+    },
+    {
+        "key": "premium_x_short_fhlb_share",
+        "label": "Premium × short FHLB share",
+        "weight": 0.05,
+        "rank_col": "RANK_PREMIUM_X_SHORT_FHLB_SHARE",
+    },
+]
+
 COMPOSITE_COMPONENTS = [
     {"key": "run_risk_index", "label": "Run Risk Index", "weight": 0.40},
     {"key": "alm_mismatch_index", "label": "ALM Mismatch Index", "weight": 0.40},
@@ -95,6 +134,13 @@ INDEX_METHODOLOGY = {
         "formula": "ALM_MISMATCH_INDEX = weighted percentile composite within REPDTE x PEER_GROUP",
         "scale_note": "Higher means larger structural mismatch by public-data proxy.",
         "components": ALM_COMPONENTS,
+    },
+    "deposit_competition": {
+        "title": "Deposit Competition Pressure Index",
+        "summary": "Percentile rank of the transparent deposit-competition pressure score within the same quarter and peer group.",
+        "formula": "DEPOSIT_COMPETITION_PRESSURE_INDEX = percentile rank of DEPOSIT_COMPETITION_PRESSURE_SCORE within REPDTE x PEER_GROUP",
+        "scale_note": "Higher means greater pressure from safe outside options and rate-sensitive funding exposure within the peer group.",
+        "components": DEPOSIT_COMPETITION_COMPONENTS,
     },
     "funding_fragility": {
         "title": "Composite Fragility Index",
@@ -129,6 +175,15 @@ SITE_INDEX_META = {
         "description": (
             "Structural balance-sheet mismatch proxy built from public call-report ratios. "
             "This is a heuristic scenario lens, not a full internal ALM model."
+        ),
+    },
+    "deposit_competition": {
+        "score_col": "DEPOSIT_COMPETITION_PRESSURE_INDEX",
+        "title": "Deposit Competition Index",
+        "accent": "emerald",
+        "description": (
+            "Peer-normalized pressure from safe outside options, deposit pass-through gaps, "
+            "and rate-sensitive funding exposure."
         ),
     },
     "funding_fragility": {
@@ -253,9 +308,13 @@ def _json_safe_nested(value: Any) -> Any:
 
 
 def _build_run_risk_components(row: pd.Series) -> list[dict[str, Any]]:
-    total_weight = sum(float(spec["weight"]) for spec in RUN_RISK_COMPONENTS)
+    return _build_rank_components(row, RUN_RISK_COMPONENTS)
+
+
+def _build_rank_components(row: pd.Series, specs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    total_weight = sum(float(spec["weight"]) for spec in specs)
     components: list[dict[str, Any]] = []
-    for spec in RUN_RISK_COMPONENTS:
+    for spec in specs:
         rank_value = pd.to_numeric(row.get(spec["rank_col"]), errors="coerce")
         if pd.isna(rank_value):
             continue
@@ -446,6 +505,7 @@ def build_league_rows(mart: pd.DataFrame) -> list[dict[str, Any]]:
     for _, row in latest.iterrows():
         deposits = row.get("DEPDOM_EFFECTIVE", row.get("DEPDOM"))
         run_risk_components = _build_run_risk_components(row)
+        deposit_competition_components = _build_rank_components(row, DEPOSIT_COMPETITION_COMPONENTS)
         alm_components = _build_contribution_components(row, ALM_COMPONENTS)
         treasury_buffer_components = _build_contribution_components(row, TREASURY_BUFFER_COMPONENTS)
         composite_components = _build_composite_components(row)
@@ -466,8 +526,13 @@ def build_league_rows(mart: pd.DataFrame) -> list[dict[str, Any]]:
                 "run_risk": _json_safe(row.get("RUN_RISK_INDEX")),
                 "alm_mismatch": _json_safe(row.get("ALM_MISMATCH_INDEX")),
                 "treasury_buffer": _json_safe(row.get("TREASURY_BUFFER_INDEX")),
+                "deposit_competition": _json_safe(row.get("DEPOSIT_COMPETITION_PRESSURE_INDEX")),
+                "deposit_competition_pressure": _json_safe(row.get("DEPOSIT_COMPETITION_PRESSURE_INDEX")),
+                "deposit_competition_resilience": _json_safe(row.get("DEPOSIT_COMPETITION_RESILIENCE_INDEX")),
+                "deposit_competition_score": _json_safe(row.get("DEPOSIT_COMPETITION_PRESSURE_SCORE")),
                 "funding_fragility": _json_safe(row.get("FUNDING_FRAGILITY_INDEX")),
                 "run_risk_components": _json_safe_nested(run_risk_components),
+                "deposit_competition_components": _json_safe_nested(deposit_competition_components),
                 "alm_components": _json_safe_nested(alm_components),
                 "treasury_buffer_components": _json_safe_nested(treasury_buffer_components),
                 "composite_components": _json_safe_nested(composite_components),

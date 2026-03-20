@@ -5,6 +5,7 @@ var CONFIG = { dataRoot: 'data', animDuration: 800, staggerMs: 30 };
 var INDEX_ACCENTS = {
   run_risk: 'crimson',
   alm_mismatch: 'amber',
+  deposit_competition: 'emerald',
   funding_fragility: 'indigo'
 };
 
@@ -199,7 +200,7 @@ function renderMethodology(manifest) {
   if (!grid) return;
 
   var methods = manifest.index_methodology || {};
-  var order = ['run_risk', 'alm_mismatch', 'funding_fragility'];
+  var order = ['run_risk', 'alm_mismatch', 'deposit_competition', 'funding_fragility'];
 
   grid.innerHTML = order.map(function (id) {
     var method = methods[id];

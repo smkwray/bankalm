@@ -9,7 +9,7 @@ The **bankALM** static site provides an interactive atlas of bank fragility scor
 Live at **[smkwray.github.io/bankalm](https://smkwray.github.io/bankalm/)** | served from `site/` via GitHub Pages.
 
 - **Homepage** — hero metrics, risk index cards, backtest comparison
-- **League Table** — sortable, filterable, paginated rankings for each index (Run Risk, ALM Mismatch, Composite Fragility)
+- **League Table** — sortable, filterable, paginated rankings for each index (Run Risk, ALM Mismatch, Deposit Competition, Composite Fragility)
 - **Bank Detail** — per-bank score breakdown, profile metadata, methodology notes
 
 To run locally:
@@ -33,7 +33,8 @@ A reproducible pipeline using only free public data to estimate, at the U.S. ban
 3. **Asset-liability mismatch** — 13 structural ratios (pre-hedge proxy)
 4. **FFIEC repricing buckets** — loan/deposit/borrowing maturity + repricing gaps + duration-gap-lite
 5. **Treasury buffer extensions** — shock scenarios, encumbrance-adjusted coverage
-6. **Interpretable indices** — peer-group normalized, per-row versioned
+6. **Deposit competition pressure** — outside-option premium, pass-through gap, and rate-sensitive funding exposure
+7. **Interpretable indices** — peer-group normalized, per-row versioned
 
 ## Quickstart
 
@@ -85,7 +86,7 @@ These artifacts support **exploratory public-data screening**, not a claim that 
 src/bankfragility/
   downloads/         FDIC API, Treasury yields
   staging/           Bank panel (5-way join), FFIEC repricing extraction
-  features/          Deposit stickiness, ALM mismatch, Treasury extensions
+  features/          Deposit stickiness, ALM mismatch, Treasury extensions, deposit competition
   models/            Index construction, supervised stickiness overlay
   validation/        Failure backtest, 11 consistency checks
   entity/            SEC CIK mapping, 10-Q/10-K parser, NIC structure
@@ -103,7 +104,9 @@ src/bankfragility/
 | `make validate` | Run 2023 SVB stress validation |
 | `make download-all` | Download default raw data |
 | `make download-treasury` | Download Treasury yield history |
+| `make download-market-rates` | Optional FRED short-rate history (IORB / ON RRP) |
 | `make build-all` | Build panel through indices + supervised |
+| `make build-deposit-competition` | Build the post-Treasury deposit-competition feature stage |
 | `make backtest-failures` | Run quarter-aligned failure cohort validation |
 | `make reports` | Generate league tables and reports |
 | `make clean` | Remove processed outputs (keeps raw) |
@@ -112,9 +115,9 @@ src/bankfragility/
 
 The pipeline produces per bank-quarter:
 
-- **Raw features:** deposit composition, ALM ratios, Treasury coverage, FFIEC repricing buckets
+- **Raw features:** deposit composition, ALM ratios, Treasury coverage, deposit-competition pressure features, FFIEC repricing buckets
 - **Scenario estimates:** deposit WAL under baseline/adverse/severe, stable-equivalent amounts
-- **Indices:** `run_risk_index`, `deposit_stickiness_index`, `alm_mismatch_index`, `treasury_buffer_index`, `funding_fragility_index`
+- **Indices:** `run_risk_index`, `deposit_stickiness_index`, `alm_mismatch_index`, `treasury_buffer_index`, `deposit_competition_pressure_index`, `deposit_competition_resilience_index`, `funding_fragility_index`
 - **Supervised overlay:** experimental `SUPERVISED_OUTFLOW_SCORE` plus next-quarter observability and label fields
 - **Failure backtest:** `FAIL_WITHIN_1Q`, `FAIL_WITHIN_2Q`, `FAIL_WITHIN_4Q` labels plus cohort metrics tables
 - **Split publishable panels:**
@@ -130,6 +133,7 @@ The pipeline produces per bank-quarter:
 |---|---|
 | `config/peer_groups.yaml` | Asset-size peer group thresholds (in FDIC thousands) |
 | `config/index_weights.yaml` | Component weights for composite indices |
+| `config/deposit_competition.yaml` | Outside-option benchmarks and transparent pressure-score weights |
 | `config/stickiness_scenarios.yaml` | Deposit life parameters by scenario |
 | `config/ffiec_repricing_map.yaml` | MDRM code → standard horizon mapping |
 | `config/sec_overrides.yaml` | Manual CERT → SEC CIK/ticker overrides |
@@ -145,6 +149,7 @@ The pipeline produces per bank-quarter:
 - Holding-company disclosures and institutions metadata are not historical as-of mappings
 - Supervised overlay is backward-looking and experimental
 - Treasury yield history is integrated into the recent-history enriched panel, not the full-history core panel
+- Deposit-competition features and indices are part of the recent-history enriched surface unless optional market-rate history is supplied more broadly
 
 The transparent score is the primary product. The supervised overlay is secondary. bankALM is a **transparent public-data fragility screen and scenario engine**, not a decision-grade probability model.
 
@@ -153,8 +158,8 @@ The transparent score is the primary product. The supervised overlay is secondar
 Use the split outputs intentionally:
 
 - `universe_core_panel.parquet`: full-history panel for historically consistent use. Excludes reliance on the recent-only advanced-module surface.
-- `universe_enriched_panel.parquet`: recent-history panel beginning when FFIEC/derivative enrichment is available.
+- `universe_enriched_panel.parquet`: recent-history panel beginning when FFIEC/derivative/Treasury enrichment is available, including deposit-competition fields.
 - `universe_publishable_mart.parquet`: integrated internal mart used to derive the split panels and site exports.
 - `universe_failure_backtest_metrics.csv`: quarter-aligned validation metrics by score, horizon, and episode slice.
 
-The static site is generated from the recent-history enriched panel and includes manifest metadata describing both published panel variants.
+The static site is generated from the recent-history enriched panel and includes manifest metadata describing both published panel variants, including the deposit-competition index where available.

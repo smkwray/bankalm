@@ -1,0 +1,49 @@
+benchmark_selection:
+  method: max_available
+  benchmark_priority:
+    - IORB_BP
+    - RRPONTSYAWARD_BP
+    - YC_3MO_BP
+
+raw_rate_columns_to_bp:
+  IORB: IORB_BP
+  RRPONTSYAWARD: RRPONTSYAWARD_BP
+  YC_3MO: YC_3MO_BP
+  EFFR: EFFR_BP
+  SOFR: SOFR_BP
+
+premium_floor_bp: 0.0
+
+rate_sensitive_exposure_weights:
+  UNINSURED_SHARE: 0.45
+  BROKERED_SHARE: 0.15
+  LIST_SERVICE_SHARE: 0.10
+  TIME_DEPOSIT_SHARE: 0.05
+
+transparent_pressure:
+  missing_rank_fill: 0.50
+  components:
+    outside_option_premium_pos_bp:
+      column: OUTSIDE_OPTION_PREMIUM_POS_BP
+      weight: 0.35
+      orientation: higher_is_worse
+    pass_through_gap_bp:
+      column: PASS_THROUGH_GAP_BP
+      weight: 0.20
+      orientation: higher_is_worse
+    rate_sensitive_deposit_exposure:
+      column: RATE_SENSITIVE_DEPOSIT_EXPOSURE
+      weight: 0.10
+      orientation: higher_is_worse
+    premium_x_rate_sensitive_exposure:
+      column: PREMIUM_X_RATE_SENSITIVE_EXPOSURE
+      weight: 0.20
+      orientation: higher_is_worse
+    premium_x_dep_drawdown_4q:
+      column: PREMIUM_X_DEP_DRAWDOWN_4Q
+      weight: 0.10
+      orientation: higher_is_worse
+    premium_x_short_fhlb_share:
+      column: PREMIUM_X_SHORT_FHLB_SHARE
+      weight: 0.05
+      orientation: higher_is_worse

@@ -48,10 +48,19 @@ def test_write_site_exports_generates_manifest_and_league_json(tmp_path) -> None
         "RUN_RISK_INDEX": [80.0, 40.0],
         "ALM_MISMATCH_INDEX": [60.0, 30.0],
         "TREASURY_BUFFER_INDEX": [20.0, 70.0],
+        "DEPOSIT_COMPETITION_PRESSURE_INDEX": [68.0, 34.0],
+        "DEPOSIT_COMPETITION_RESILIENCE_INDEX": [32.0, 66.0],
+        "DEPOSIT_COMPETITION_PRESSURE_SCORE": [66.0, 36.0],
         "FUNDING_FRAGILITY_INDEX": [75.0, 35.0],
         "ALM_MISMATCH_INDEX_CONTRIB_LONG_TERM_ASSETS_TO_STABLE_FUNDING_BASELINE": [20.0, 8.0],
         "ALM_MISMATCH_INDEX_CONTRIB_VOLATILE_TO_LIQUID_LOWER": [18.0, 9.0],
         "TREASURY_BUFFER_INDEX_CONTRIB_TREASURY_TO_UNINSURED_AFTER_100BP": [8.0, 24.0],
+        "RANK_OUTSIDE_OPTION_PREMIUM_POS_BP": [0.85, 0.25],
+        "RANK_PASS_THROUGH_GAP_BP": [0.80, 0.30],
+        "RANK_RATE_SENSITIVE_DEPOSIT_EXPOSURE": [0.75, 0.35],
+        "RANK_PREMIUM_X_RATE_SENSITIVE_EXPOSURE": [0.78, 0.32],
+        "RANK_PREMIUM_X_DEP_DRAWDOWN_4Q": [0.70, 0.40],
+        "RANK_PREMIUM_X_SHORT_FHLB_SHARE": [0.72, 0.38],
         "TREASURY_YIELD_DATE": pd.to_datetime(["2024-03-29", "2024-03-29"]),
         "HAS_TREASURY_YIELD_HISTORY": [1, 1],
         "YC_2YR": [4.6, 4.6],
@@ -87,13 +96,17 @@ def test_write_site_exports_generates_manifest_and_league_json(tmp_path) -> None
     assert manifest["treasury_regime"]["yield_date"] == "2024-03-29"
     assert manifest["treasury_regime"]["y10"] == 4.2
     assert "run_risk" in manifest["index_methodology"]
+    assert "deposit_competition" in manifest["index_methodology"]
     assert manifest["index_methodology"]["funding_fragility"]["components"][0]["label"] == "Run Risk Index"
+    assert any(idx["id"] == "deposit_competition" for idx in manifest["indices"])
     assert league[0]["name"] == "Bank A"
     assert league[0]["funding_fragility"] == 75.0
+    assert league[0]["deposit_competition"] == 68.0
     assert league[0]["peer_group_bank_count"] == 1
     assert league[0]["treasury_yield_date"] == "2024-03-29"
     assert league[0]["yc_10yr"] == 4.2
     assert league[0]["run_risk_components"][0]["label"] == "Uninsured deposits"
+    assert league[0]["deposit_competition_components"][0]["label"] == "Outside-option premium"
     assert league[0]["alm_components"][0]["label"] == "Long-term assets / stable funding"
     assert league[0]["composite_components"][0]["label"] == "Run Risk Index"
 

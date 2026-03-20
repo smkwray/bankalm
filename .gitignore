@@ -3,6 +3,7 @@
 do/
 docs/
 prompts/
+notes/
 
 # Reference data (large Excel/CSV not for repo)
 reference/
@@ -13,15 +14,30 @@ reference/
 
 # Environment
 .env
+.env.*
+*.env
+*.local
+*.secrets
+*.secret
+*.key
+*.pem
 
-# Plans
+# Private planning / handoff files
 *.plan.md
+*_plan.md
+*plan*.md
+handoff.md
+todo.md
+dontdo.md
+changes.md
 plan.md
 plans/
 
-# Claude Code
-.claude/
-CLAUDE.md
+# Local agent/tool metadata
+.[cC][lL][aA][uU][dD][eE]/
+[cC][lL][aA][uU][dD][eE].md
+.[cC][oO][dD][eE][xX]/
+[cC][oO][dD][eE][xX].md
 
 # Playwright MCP
 .playwright-mcp/
