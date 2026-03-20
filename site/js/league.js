@@ -7,6 +7,11 @@ function fetchJSON(p) {
     if (!r.ok) throw new Error('Fetch failed: ' + p); return r.json();
   });
 }
+function fetchWithFallback(primaryPath, fallbackPath) {
+  return fetchJSON(primaryPath).catch(function () {
+    return fallbackPath ? fetchJSON(fallbackPath) : Promise.reject(new Error('Fetch failed: ' + primaryPath));
+  });
+}
 function fmt(n) { return Number(n).toLocaleString(); }
 function fmtRate(value) {
   if (value == null || Number.isNaN(Number(value))) return '\u2014';
@@ -20,6 +25,73 @@ function metricText(value, digits, suffix) {
   suffix = suffix || '';
   if (value == null || Number.isNaN(Number(value))) return '\u2014';
   return Number(value).toFixed(digits) + suffix;
+}
+function freshnessFromManifest(manifest) {
+  var freshness = manifest && manifest.freshness ? manifest.freshness : {};
+  var snapshot = freshness.site_snapshot_as_of || (manifest && manifest.pipeline && manifest.pipeline.date_range ? String(manifest.pipeline.date_range).split(' \u2013 ').pop() : null);
+  return {
+    site_snapshot_as_of: snapshot,
+    generated_at: freshness.generated_at || manifest.generated_at || null,
+    source_max_dates: freshness.source_max_dates || {},
+    coverage_warnings: freshness.coverage_warnings || [],
+    stale: freshness.stale
+  };
+}
+function freshnessSummary(manifest) {
+  var freshness = freshnessFromManifest(manifest);
+  var parts = [];
+  if (freshness.site_snapshot_as_of) parts.push('Data as of ' + freshness.site_snapshot_as_of);
+  if (freshness.generated_at) parts.push('generated ' + freshness.generated_at.slice(0, 10));
+  if (freshness.stale) parts.push('stale');
+  if (freshness.coverage_warnings && freshness.coverage_warnings.length > 0) {
+    parts.push(freshness.coverage_warnings[0]);
+  }
+  return parts.join(' \u2022 ');
+}
+function indexValidationBadge(idx) {
+  if (!idx) return '';
+  return idx.validation_status === 'not_backtested_yet'
+    ? '<span class="comparison-badge comparison-badge-muted">Experimental</span>'
+    : '';
+}
+function indexValidationNote(idx) {
+  if (!idx || !idx.status_note) return '';
+  return '<p class="index-status-note">' + escapeHtml(idx.status_note) + '</p>';
+}
+function metricOrStatus(idx, value, digits, suffix) {
+  if (value == null || Number.isNaN(Number(value))) {
+    return idx && idx.validation_status === 'not_backtested_yet' ? 'Not backtested yet' : '\u2014';
+  }
+  return Number(value).toFixed(digits) + (suffix || '');
+}
+function renderFreshnessBanner(manifest) {
+  var freshness = manifest.freshness || {};
+  var header = document.getElementById('header');
+  if (!header || !header.parentNode) return;
+  var existing = document.getElementById('freshness-banner');
+  if (existing) existing.remove();
+  var banner = document.createElement('div');
+  banner.id = 'freshness-banner';
+  banner.className = 'freshness-banner' + (freshness.stale ? ' is-stale' : '');
+  var inner = document.createElement('div');
+  inner.className = 'container freshness-banner-inner';
+  var strong = document.createElement('strong');
+  strong.textContent = 'Data as of ' + (freshness.site_snapshot_as_of || '—');
+  inner.appendChild(strong);
+  if (freshness.generated_at) {
+    var build = document.createElement('span');
+    build.className = 'freshness-build';
+    build.textContent = 'Built ' + freshness.generated_at.slice(0, 10);
+    inner.appendChild(build);
+  }
+  if (Array.isArray(freshness.coverage_warnings) && freshness.coverage_warnings.length > 0) {
+    var warning = document.createElement('span');
+    warning.className = 'freshness-warning';
+    warning.textContent = freshness.coverage_warnings[0];
+    inner.appendChild(warning);
+  }
+  banner.appendChild(inner);
+  header.parentNode.insertBefore(banner, header.nextSibling);
 }
 function treasuryRegimeLabel(regime) {
   if (!regime || regime.slope_10y_3m_bp == null || Number.isNaN(Number(regime.slope_10y_3m_bp))) return 'Unavailable';
@@ -37,6 +109,14 @@ function riskClass(score) {
   return 'risk-low';
 }
 function getParam(k) { return new URLSearchParams(location.search).get(k); }
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 function scoreForIndex(bank, indexId) {
   var scoreMap = {
     run_risk: bank.run_risk,
@@ -45,7 +125,45 @@ function scoreForIndex(bank, indexId) {
     deposit_competition: bank.deposit_competition,
     funding_fragility: bank.funding_fragility
   };
-  return scoreMap[indexId] || bank.funding_fragility || 0;
+  return scoreMap[indexId] != null ? scoreMap[indexId] : (bank.funding_fragility != null ? bank.funding_fragility : 0);
+}
+function closeNav() {
+  var nav = document.getElementById('nav');
+  var hamburger = document.getElementById('hamburger');
+  if (nav) nav.classList.remove('open');
+  if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
+}
+function toggleNav() {
+  var nav = document.getElementById('nav');
+  var hamburger = document.getElementById('hamburger');
+  if (!nav || !hamburger) return;
+  var isOpen = nav.classList.toggle('open');
+  hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+}
+function initMobileNav() {
+  var nav = document.getElementById('nav');
+  var hamburger = document.getElementById('hamburger');
+  if (!nav || !hamburger) return;
+  hamburger.setAttribute('aria-expanded', nav.classList.contains('open') ? 'true' : 'false');
+  hamburger.addEventListener('click', function (e) {
+    e.preventDefault();
+    toggleNav();
+  });
+  document.addEventListener('click', function (e) {
+    if (!nav.classList.contains('open')) return;
+    if (e.target.closest('#nav') || e.target.closest('#hamburger')) return;
+    closeNav();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeNav();
+  });
+}
+function buildBankUrl(cert) {
+  return 'bank.html?cert=' + encodeURIComponent(cert) + '&index=' + encodeURIComponent(S.indexId);
+}
+function renderIndexStatus(idx) {
+  if (!idx || idx.validation_status !== 'not_backtested_yet') return '';
+  return '<p class="index-status-note">' + escapeHtml(idx.status_note || 'Experimental index. No failure backtest has been published yet.') + '</p>';
 }
 
 var S = {
@@ -59,25 +177,30 @@ var S = {
 /* ── Hero ──────────────────────────────────── */
 function renderHero(manifest) {
   var idx = S.indexMeta;
+  var freshness = freshnessSummary(manifest);
   document.title = idx.title + ' League Table \u2014 bankALM';
-  document.getElementById('league-title').textContent = idx.title + ' League Table';
+  document.getElementById('league-title').innerHTML = idx.title + ' League Table ' + indexValidationBadge(idx);
   document.getElementById('league-desc').textContent = idx.description;
   document.getElementById('league-breadcrumb').textContent = idx.title;
   document.getElementById('lh-banks').textContent = fmt(idx.bank_count);
-  document.getElementById('lh-auc').textContent = metricText(idx.failure_auc, 4, '');
-  document.getElementById('lh-recall').textContent = metricText(idx.failure_recall_20 != null ? idx.failure_recall_20 * 100 : null, 1, '%');
-  document.getElementById('lh-failures').textContent = fmt(manifest.pipeline.failures_tested);
+  document.getElementById('lh-auc').textContent = idx.failure_auc == null ? 'Not backtested yet' : metricText(idx.failure_auc, 4, '');
+  document.getElementById('lh-recall').textContent = idx.failure_recall_20 == null ? 'Not backtested yet' : metricText(idx.failure_recall_20 != null ? idx.failure_recall_20 * 100 : null, 1, '%');
+  document.getElementById('lh-failures').textContent = idx.validation_status === 'not_backtested_yet' ? '\u2014' : fmt(manifest.pipeline.failures_tested);
 
   var regime = manifest.treasury_regime || {};
   var regimeText = document.getElementById('league-regime-text');
   if (regimeText) {
+    var parts = [];
+    if (freshness) parts.push(freshness);
+    if (idx.status_note) parts.push(idx.status_note);
     if (regime.yield_date) {
-      regimeText.textContent = 'Latest enriched-panel backdrop (' + regime.yield_date + '): ' +
+      parts.push('Latest enriched-panel backdrop (' + regime.yield_date + '): ' +
         treasuryRegimeLabel(regime) + ', 10Y Treasury ' + fmtRate(regime.y10) +
-        ', 10Y-3M slope ' + fmtBp(regime.slope_10y_3m_bp) + '. This is macro context, not part of the ranking formula.';
+        ', 10Y-3M slope ' + fmtBp(regime.slope_10y_3m_bp) + '. This is macro context, not part of the ranking formula.');
     } else {
-      regimeText.textContent = 'Treasury backdrop unavailable for this dataset slice.';
+      parts.push('Treasury backdrop unavailable for this dataset slice.');
     }
+    regimeText.textContent = parts.join(' \u2022 ');
   }
 }
 
@@ -91,9 +214,10 @@ function renderMethodology(manifest) {
     return;
   }
 
+  var idx = (manifest.indices || []).find(function (item) { return item.id === S.indexId; }) || {};
   var components = Array.isArray(method.components) ? method.components : [];
   wrap.innerHTML =
-    '<p>' + method.summary + '</p>' +
+    '<p>' + method.summary + ' ' + indexValidationBadge(idx) + '</p>' +
     '<div class="method-formula">' + method.formula + '</div>' +
     '<div class="method-inline-list">' +
       '<div class="method-inline-item"><strong>Peer normalization:</strong> banks are compared within the same report quarter and asset-size peer group.</div>' +
@@ -159,6 +283,7 @@ function applyFilters() {
 function sortBanks() {
   var k = S.sortKey, d = S.sortDir === 'asc' ? 1 : -1;
   S.filtered.sort(function (a, b) {
+    if (k === 'rank') return d * ((a.score || 0) - (b.score || 0));
     var av = a[k], bv = b[k];
     if (typeof av === 'string' || typeof bv === 'string') return d * String(av || '').localeCompare(String(bv || ''));
     return d * ((av || 0) - (bv || 0));
@@ -178,12 +303,12 @@ function renderTable() {
   var page = S.filtered.slice(start, end);
   tbody.innerHTML = page.map(function (b, i) {
     var rank = start + i + 1;
-    var score = b.score || 0;
+    var score = b.score != null ? b.score : 0;
     var sw = Math.min(score, 100);
     var rc = riskClass(score);
-    return '<tr class="bank-row" onclick="location.href=\'bank.html?cert=' + b.cert + '\'">' +
+    return '<tr class="bank-row">' +
       '<td class="num-cell">' + rank + '</td>' +
-      '<td><span class="bank-table-name">' + b.name + '</span></td>' +
+      '<td><a href="' + buildBankUrl(b.cert) + '" class="bank-table-link"><span class="bank-table-name">' + escapeHtml(b.name) + '</span></a></td>' +
       '<td class="score-cell"><div class="mini-score-bar"><div class="mini-score-fill ' + rc + '" style="width:' + sw + '%"></div></div><span class="score-val">' + score.toFixed(1) + '</span></td>' +
       '<td><span class="peer-badge">' + fmtPeerGroup(b.peer_group) + '</span></td>' +
       '<td class="num-cell">' + (b.assets ? '$' + (b.assets / 1e6).toFixed(1) + 'B' : '\u2014') + '</td>' +
@@ -231,12 +356,18 @@ function scrollToTable() {
 /* ── Sort Headers ──────────────────────────── */
 function initSort() {
   document.querySelectorAll('.data-table th[data-sort]').forEach(function (th) {
-    th.addEventListener('click', function () {
-      var k = this.dataset.sort;
+    th.setAttribute('aria-sort', th.classList.contains('sort-desc') ? 'descending' : 'none');
+    var trigger = th.querySelector('[data-sort-button]') || th;
+    trigger.addEventListener('click', function () {
+      var k = th.dataset.sort;
       if (S.sortKey === k) S.sortDir = S.sortDir === 'asc' ? 'desc' : 'asc';
       else { S.sortKey = k; S.sortDir = (k === 'name' || k === 'state' || k === 'peer_group') ? 'asc' : 'desc'; }
-      document.querySelectorAll('.data-table th[data-sort]').forEach(function (h) { h.classList.remove('sort-asc', 'sort-desc'); });
-      this.classList.add('sort-' + S.sortDir);
+      document.querySelectorAll('.data-table th[data-sort]').forEach(function (h) {
+        h.classList.remove('sort-asc', 'sort-desc');
+        h.setAttribute('aria-sort', 'none');
+      });
+      th.classList.add('sort-' + S.sortDir);
+      th.setAttribute('aria-sort', S.sortDir === 'asc' ? 'ascending' : 'descending');
       applyFilters();
     });
   });
@@ -246,7 +377,7 @@ function initSort() {
 function init() {
   S.indexId = getParam('index') || 'run_risk';
 
-  Promise.all([fetchJSON('manifest.json'), fetchJSON('league.json')]).then(function (results) {
+  Promise.all([fetchJSON('manifest.json'), fetchWithFallback('banks/latest.json', 'league.json')]).then(function (results) {
     var manifest = results[0];
     var banks = results[1];
 
@@ -264,6 +395,7 @@ function init() {
     S.filtered = S.banks.slice();
     renderHero(manifest);
     renderMethodology(manifest);
+    renderFreshnessBanner(manifest);
     renderFilters(manifest);
     sortBanks();
     renderTable();
@@ -276,6 +408,7 @@ function init() {
 
     var si = document.getElementById('table-search');
     if (si) si.addEventListener('input', function () { S.searchTerm = this.value; applyFilters(); });
+    initMobileNav();
   }).catch(function (e) {
     console.error(e);
     document.getElementById('league-title').textContent = 'Error: ' + e.message;

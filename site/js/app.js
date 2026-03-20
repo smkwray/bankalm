@@ -18,6 +18,12 @@ function fetchJSON(path) {
     });
 }
 
+function fetchWithFallback(primaryPath, fallbackPath) {
+  return fetchJSON(primaryPath).catch(function () {
+    return fallbackPath ? fetchJSON(fallbackPath) : Promise.reject(new Error('Fetch failed: ' + primaryPath));
+  });
+}
+
 function fmt(n) { return Number(n).toLocaleString(); }
 function pct(n) { return (n * 100).toFixed(1) + '%'; }
 function fmtRate(value) {
@@ -57,6 +63,15 @@ function el(tag, cls, html) {
   return e;
 }
 
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function formatBuildDate(iso) {
   if (!iso) return null;
   var date = new Date(iso);
@@ -64,6 +79,85 @@ function formatBuildDate(iso) {
   return date.getUTCFullYear() + '-' +
     String(date.getUTCMonth() + 1).padStart(2, '0') + '-' +
     String(date.getUTCDate()).padStart(2, '0');
+}
+
+function isMissingDisplayValue(value) {
+  return value == null || value === '' || value === '\u2014' || (typeof value === 'number' && Number.isNaN(value));
+}
+
+function formatStatusValue(idx, value) {
+  if (isMissingDisplayValue(value)) {
+    return idx && idx.validation_status === 'not_backtested_yet' ? 'Not backtested yet' : '\u2014';
+  }
+  return value;
+}
+
+function indexStatusBadge(idx) {
+  if (!idx) return '';
+  return idx.validation_status === 'not_backtested_yet'
+    ? '<span class="comparison-badge comparison-badge-muted">Experimental</span>'
+    : '';
+}
+
+function indexStatusNote(idx) {
+  if (!idx || !idx.status_note) return '';
+  return '<p class="index-status-note">' + escapeHtml(idx.status_note) + '</p>';
+}
+
+function closeNav() {
+  var nav = document.getElementById('nav');
+  var hamburger = document.getElementById('hamburger');
+  if (nav) nav.classList.remove('open');
+  if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
+}
+
+function toggleNav() {
+  var nav = document.getElementById('nav');
+  var hamburger = document.getElementById('hamburger');
+  if (!nav || !hamburger) return;
+  var isOpen = nav.classList.toggle('open');
+  hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+}
+
+function initMobileNav() {
+  var nav = document.getElementById('nav');
+  var hamburger = document.getElementById('hamburger');
+  if (!nav || !hamburger) return;
+  hamburger.setAttribute('aria-expanded', nav.classList.contains('open') ? 'true' : 'false');
+  hamburger.addEventListener('click', function (e) {
+    e.preventDefault();
+    toggleNav();
+  });
+  document.addEventListener('click', function (e) {
+    if (!nav.classList.contains('open')) return;
+    if (e.target.closest('#nav') || e.target.closest('#hamburger')) return;
+    closeNav();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeNav();
+  });
+  nav.addEventListener('click', function (e) {
+    if (e.target.closest('a')) closeNav();
+  });
+}
+
+function renderFreshnessBanner(manifest) {
+  var freshness = manifest.freshness || {};
+  var asOf = freshness.site_snapshot_as_of || '\u2014';
+  var warnings = Array.isArray(freshness.coverage_warnings) ? freshness.coverage_warnings : [];
+  var header = document.getElementById('header');
+  if (!header || !header.parentNode) return;
+  var existing = document.getElementById('freshness-banner');
+  if (existing) existing.remove();
+  var banner = el('div', 'freshness-banner' + (freshness.stale ? ' is-stale' : ''));
+  banner.id = 'freshness-banner';
+  banner.innerHTML =
+    '<div class="container freshness-banner-inner">' +
+      '<strong>Data as of ' + escapeHtml(asOf) + '</strong>' +
+      (freshness.generated_at ? '<span class="freshness-build">Built ' + escapeHtml(formatBuildDate(freshness.generated_at)) + '</span>' : '') +
+      (warnings.length > 0 ? '<span class="freshness-warning">' + escapeHtml(warnings[0]) + '</span>' : '') +
+    '</div>';
+  header.parentNode.insertBefore(banner, header.nextSibling);
 }
 
 /* ── Counter Animation ───────────────────────── */
@@ -130,8 +224,10 @@ function renderHeroMetrics(manifest) {
 
   var buildNote = document.getElementById('metric-build-note');
   if (buildNote) {
+    var freshness = manifest.freshness || {};
     var d = formatBuildDate(manifest.generated_at);
-    buildNote.textContent = d ? 'Data build: ' + d + ' \u2022 ' + fmt(p.bank_quarters) + ' bank-quarters' : '';
+    var asOf = freshness.site_snapshot_as_of;
+    buildNote.textContent = d ? 'Data build: ' + d + (asOf ? ' \u2022 Data as of ' + asOf : '') + ' \u2022 ' + fmt(p.bank_quarters) + ' bank-quarters' : '';
   }
 }
 
@@ -180,13 +276,14 @@ function renderIndexCards(manifest) {
     card.innerHTML =
       '<div class="panel-card-accent"></div>' +
       '<div class="panel-card-body">' +
-        '<h3 class="panel-card-title">' + idx.title + '</h3>' +
+        '<h3 class="panel-card-title">' + idx.title + ' ' + indexStatusBadge(idx) + '</h3>' +
         '<p class="panel-card-desc">' + idx.description + '</p>' +
         '<div class="panel-card-stats">' +
-          '<div class="panel-stat"><span class="panel-stat-value">' + metricText(idx.failure_auc, 2, '') + '</span><span class="panel-stat-label">Failure AUC</span></div>' +
-          '<div class="panel-stat"><span class="panel-stat-value">' + metricText(idx.failure_recall_20 != null ? idx.failure_recall_20 * 100 : null, 0, '%') + '</span><span class="panel-stat-label">Recall @20%</span></div>' +
+          '<div class="panel-stat"><span class="panel-stat-value">' + formatStatusValue(idx, metricText(idx.failure_auc, 2, '')) + '</span><span class="panel-stat-label">Failure AUC</span></div>' +
+          '<div class="panel-stat"><span class="panel-stat-value">' + formatStatusValue(idx, metricText(idx.failure_recall_20 != null ? idx.failure_recall_20 * 100 : null, 0, '%')) + '</span><span class="panel-stat-label">Recall @20%</span></div>' +
           '<div class="panel-stat"><span class="panel-stat-value">' + fmt(idx.bank_count) + '</span><span class="panel-stat-label">Banks</span></div>' +
         '</div>' +
+        indexStatusNote(idx) +
         topBanksHtml +
         '<a href="league.html?index=' + idx.id + '" class="panel-card-cta">View league table &rarr;</a>' +
       '</div>';
@@ -240,11 +337,13 @@ function renderComparison(manifest) {
       '<div class="comparison-header">' +
         '<span class="comparison-title">' + idx.title + '</span>' +
         (idx.id === 'run_risk' ? '<span class="comparison-badge">Best</span>' : '') +
+        indexStatusBadge(idx) +
       '</div>' +
       '<div class="comparison-bars">' +
-        compRow('AUC', aucW, metricText(idx.failure_auc, 4, '')) +
-        compRow('Recall @20%', recallW, metricText(idx.failure_recall_20 != null ? idx.failure_recall_20 * 100 : null, 1, '%')) +
-      '</div>';
+        compRow('AUC', aucW, formatStatusValue(idx, metricText(idx.failure_auc, 4, ''))) +
+        compRow('Recall @20%', recallW, formatStatusValue(idx, metricText(idx.failure_recall_20 != null ? idx.failure_recall_20 * 100 : null, 1, '%'))) +
+      '</div>' +
+      indexStatusNote(idx);
     grid.appendChild(item);
   });
 }
@@ -291,8 +390,8 @@ function initSmoothScroll() {
         var offset = h ? h.offsetHeight + 20 : 20;
         var top = target.getBoundingClientRect().top + window.scrollY - offset;
         window.scrollTo({ top: top, behavior: 'smooth' });
-        var nav = document.getElementById('nav');
-        if (nav) nav.classList.remove('open');
+        if (history && history.replaceState) history.replaceState(null, '', href);
+        closeNav();
       }
     });
   });
@@ -302,7 +401,7 @@ function initSmoothScroll() {
 var searchIndex = [];
 
 function loadSearchIndex() {
-  return fetchJSON('league.json').then(function (banks) {
+  return fetchWithFallback('banks/latest.json', 'league.json').then(function (banks) {
     searchIndex = banks;
     initSearch();
   }).catch(function () {});
@@ -312,10 +411,18 @@ function initSearch() {
   var input = document.getElementById('search-input');
   var results = document.getElementById('search-results');
   if (!input || !results) return;
+  input.setAttribute('aria-controls', 'search-results');
+  input.setAttribute('aria-expanded', 'false');
+  results.setAttribute('role', 'listbox');
 
   input.addEventListener('input', function () {
     var q = input.value.toLowerCase().trim();
-    if (q.length < 2) { results.innerHTML = ''; results.style.display = 'none'; return; }
+    if (q.length < 2) {
+      results.innerHTML = '';
+      results.style.display = 'none';
+      input.setAttribute('aria-expanded', 'false');
+      return;
+    }
 
     var matches = searchIndex.filter(function (b) {
       return (b.name || '').toLowerCase().includes(q) ||
@@ -325,35 +432,43 @@ function initSearch() {
 
     if (matches.length === 0) {
       results.innerHTML = '<div class="search-empty">No banks found</div>';
-      results.style.display = 'block'; return;
+      results.style.display = 'block';
+      input.setAttribute('aria-expanded', 'true');
+      return;
     }
 
     results.innerHTML = matches.map(function (b) {
-      return '<a href="bank.html?cert=' + b.cert + '" class="search-result-item">' +
-        '<div class="search-result-name">' + b.name + '</div>' +
+      return '<a href="bank.html?cert=' + encodeURIComponent(b.cert) + '" class="search-result-item" role="option">' +
+        '<div class="search-result-name">' + escapeHtml(b.name) + '</div>' +
         '<div class="search-result-meta">' +
-          '<span class="search-result-panel">' + fmtPeerGroup(b.peer_group) + '</span>' +
-          '<span class="search-result-domain">' + (b.state || '') + '</span>' +
-          '<span class="search-result-score">' + (b.funding_fragility || 0).toFixed(0) + '</span>' +
+          '<span class="search-result-panel">' + escapeHtml(fmtPeerGroup(b.peer_group)) + '</span>' +
+          '<span class="search-result-domain">' + escapeHtml(b.state || '') + '</span>' +
+          '<span class="search-result-score">' + ((b.deposit_competition != null ? b.deposit_competition : b.funding_fragility || 0).toFixed(0)) + '</span>' +
         '</div></a>';
     }).join('');
     results.style.display = 'block';
+    input.setAttribute('aria-expanded', 'true');
   });
 
   document.addEventListener('click', function (e) {
-    if (!e.target.closest('.search-container')) results.style.display = 'none';
+    if (!e.target.closest('.search-container')) {
+      results.style.display = 'none';
+      input.setAttribute('aria-expanded', 'false');
+    }
   });
 }
 
 /* ── Main ────────────────────────────────────── */
 function init() {
   fetchJSON('manifest.json').then(function (manifest) {
+    renderFreshnessBanner(manifest);
     renderHeroMetrics(manifest);
     renderTreasuryBackdrop(manifest);
     renderIndexCards(manifest);
     renderMethodology(manifest);
     renderComparison(manifest);
     renderEpisodes(manifest);
+    initMobileNav();
     initScrollAnimations();
     initSmoothScroll();
     loadSearchIndex();

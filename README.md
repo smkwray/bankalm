@@ -10,6 +10,8 @@ The **bankALM** static site provides an interactive atlas of bank fragility scor
 - **League Table** — sortable, filterable, paginated rankings for each index (Run Risk, ALM Mismatch, Deposit Competition, Composite Fragility)
 - **Bank Detail** — per-bank score breakdown, profile metadata, methodology notes
 
+Deposit Competition now participates in the same quarter-aligned failure backtest as the other published indices. It remains a transparent public-data pressure screen for exploratory comparison, not a full funding diagnosis or a decision-grade model.
+
 To run locally:
 
 ```bash
@@ -18,7 +20,7 @@ cd site && python3 -m http.server 8000
 
 ## About
 
- bankALM is an independent research project that screens U.S. bank fragility using only free public regulatory data.
+bankALM is an independent research project that screens U.S. bank fragility using only free public regulatory data.
 
 It is not affiliated with or endorsed by the FDIC, FFIEC, Federal Reserve, or any financial institution. Scores are computed from public filings and should not be interpreted as supervisory ratings or investment advice.
 
@@ -116,12 +118,13 @@ The pipeline produces per bank-quarter:
 - **Raw features:** deposit composition, ALM ratios, Treasury coverage, deposit-competition pressure features, FFIEC repricing buckets
 - **Scenario estimates:** deposit WAL under baseline/adverse/severe, stable-equivalent amounts
 - **Indices:** `run_risk_index`, `deposit_stickiness_index`, `alm_mismatch_index`, `treasury_buffer_index`, `deposit_competition_pressure_index`, `deposit_competition_resilience_index`, `funding_fragility_index`
+- **Deposit Competition:** quarter-aligned failure backtest included; still surfaced as an exploratory public-data screening lens
 - **Supervised overlay:** experimental `SUPERVISED_OUTFLOW_SCORE` plus next-quarter observability and label fields
 - **Failure backtest:** `FAIL_WITHIN_1Q`, `FAIL_WITHIN_2Q`, `FAIL_WITHIN_4Q` labels plus cohort metrics tables
 - **Split publishable panels:**
   `data/processed/universe_core_panel.parquet` for the historically consistent full-history core output
   `data/processed/universe_enriched_panel.parquet` for the recent-history advanced-module output
-- **Mart + site exports:** integrated `data/processed/universe_publishable_mart.parquet` plus generated `site/data/manifest.json` and `site/data/league.json`
+- **Mart + site exports:** integrated `data/processed/universe_publishable_mart.parquet` plus generated `site/data/manifest.json`, `site/data/banks/latest.json`, and `site/data/banks/<cert>.json`
 - **Reports:** bank drill-downs, quarter league tables, peer-group summaries, scenario comparisons
 - **Macro context report:** `data/reports/universe/treasury_regime_summary.parquet` with one row per quarter of the observed Treasury backdrop
 
@@ -146,6 +149,7 @@ The pipeline produces per bank-quarter:
 - ALM outputs are structural public-data proxies, not a bank's internal hedge-adjusted model
 - Holding-company disclosures and institutions metadata are not historical as-of mappings
 - Supervised overlay is backward-looking and experimental
+- Deposit Competition is backtested, but it remains a transparent public-data pressure screen rather than a complete funding diagnostic
 - Treasury yield history is integrated into the recent-history enriched panel, not the full-history core panel
 - Deposit-competition features and indices are part of the recent-history enriched surface unless optional market-rate history is supplied more broadly
 

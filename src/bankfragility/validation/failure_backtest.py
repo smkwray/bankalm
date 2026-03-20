@@ -21,6 +21,7 @@ SCORE_COLUMNS = [
     ("RUN_RISK_INDEX", "Run risk index"),
     ("FUNDING_FRAGILITY_INDEX", "Composite fragility"),
     ("ALM_MISMATCH_INDEX", "ALM mismatch index"),
+    ("DEPOSIT_COMPETITION_PRESSURE_INDEX", "Deposit competition index"),
 ]
 EPISODE_WINDOWS: dict[str, tuple[str | None, str | None]] = {
     "full_sample": (None, None),

@@ -1,0 +1,211 @@
+{
+  "cert": "20250",
+  "name": "Marine Bank",
+  "peer_group": "community",
+  "peer_group_bank_count": 4075,
+  "assets": 668662,
+  "deposits": 573767,
+  "uninsured_pct": null,
+  "state": "IL",
+  "charter": "NM",
+  "repdte": "2023-03-31",
+  "run_risk_score": 37.65191430760406,
+  "stickiness_score": 62.34808569239594,
+  "run_risk": 5.359056806002144,
+  "alm_mismatch": 32.08177620558118,
+  "treasury_buffer": 57.76850306065665,
+  "deposit_competition": 96.35584137191854,
+  "deposit_competition_resilience": 3.644158628081456,
+  "deposit_competition_score": 70.50312758678659,
+  "funding_fragility": 23.422632592501998,
+  "run_risk_components": [
+    {
+      "key": "uninsured_share",
+      "label": "Uninsured deposits",
+      "weight": 0.2,
+      "percentile": 50.0,
+      "contribution": 12.82051282051282
+    },
+    {
+      "key": "brokered_share",
+      "label": "Brokered deposits",
+      "weight": 0.17,
+      "percentile": 29.826626712328768,
+      "contribution": 6.500675052687039
+    },
+    {
+      "key": "list_service_share",
+      "label": "List-service deposits",
+      "weight": 0.08,
+      "percentile": 38.93407534246575,
+      "contribution": 3.9932384966631544
+    },
+    {
+      "key": "large_account_share",
+      "label": "Large-account concentration",
+      "weight": 0.1,
+      "percentile": 50.0,
+      "contribution": 6.41025641025641
+    },
+    {
+      "key": "time_deposit_share",
+      "label": "Time-deposit share",
+      "weight": 0.05,
+      "percentile": 26.90496575342466,
+      "contribution": 1.7246772918861961
+    },
+    {
+      "key": "domestic_deposit_cost",
+      "label": "Domestic deposit cost",
+      "weight": 0.08,
+      "percentile": 3.4682080924855487,
+      "contribution": 0.3557136505113383
+    },
+    {
+      "key": "dep_growth_vol_4q",
+      "label": "Deposit-growth volatility",
+      "weight": 0.05,
+      "percentile": 1.1531069827033953,
+      "contribution": 0.07391711427585868
+    },
+    {
+      "key": "dep_drawdown_4q",
+      "label": "Deposit drawdown",
+      "weight": 0.05,
+      "percentile": 90.05760614465544,
+      "contribution": 5.772923470811246
+    }
+  ],
+  "deposit_competition_components": [
+    {
+      "key": "outside_option_premium_pos_bp",
+      "label": "Outside-option premium",
+      "weight": 0.35,
+      "percentile": 96.55320059944337,
+      "contribution": 33.79362020980518
+    },
+    {
+      "key": "pass_through_gap_bp",
+      "label": "Pass-through gap",
+      "weight": 0.2,
+      "percentile": 95.82262210796915,
+      "contribution": 19.164524421593832
+    },
+    {
+      "key": "rate_sensitive_deposit_exposure",
+      "label": "Rate-sensitive deposit exposure",
+      "weight": 0.1,
+      "percentile": 16.538461538461537,
+      "contribution": 1.6538461538461537
+    },
+    {
+      "key": "premium_x_rate_sensitive_exposure",
+      "label": "Premium \u00d7 rate-sensitive exposure",
+      "weight": 0.2,
+      "percentile": 20.57375294369514,
+      "contribution": 4.114750588739028
+    },
+    {
+      "key": "premium_x_dep_drawdown_4q",
+      "label": "Premium \u00d7 deposit drawdown",
+      "weight": 0.1,
+      "percentile": 92.76386212802397,
+      "contribution": 9.276386212802398
+    },
+    {
+      "key": "premium_x_short_fhlb_share",
+      "label": "Premium \u00d7 short FHLB share",
+      "weight": 0.05,
+      "percentile": 50.0,
+      "contribution": 2.5
+    }
+  ],
+  "alm_components": [
+    {
+      "key": "long_term_assets_to_stable_funding_baseline",
+      "label": "Long-term assets / stable funding",
+      "weight": 0.3,
+      "contribution": 4.086886564762671
+    },
+    {
+      "key": "volatile_to_liquid_lower",
+      "label": "Volatile funding / liquid assets",
+      "weight": 0.3,
+      "contribution": 13.056948952493359
+    },
+    {
+      "key": "security_vs_deposit_gap_baseline",
+      "label": "Securities / deposit gap",
+      "weight": 0.2,
+      "contribution": 3.3221850613154964
+    },
+    {
+      "key": "loans_to_core_deposits",
+      "label": "Loans / core deposits",
+      "weight": 0.1,
+      "contribution": 6.615755627009647
+    },
+    {
+      "key": "short_fhlb_share",
+      "label": "Short FHLB funding share",
+      "weight": 0.1,
+      "contribution": 5.0
+    }
+  ],
+  "treasury_buffer_components": [
+    {
+      "key": "treasury_to_uninsured_after_100bp",
+      "label": "Treasuries / uninsured after 100 bp shock",
+      "weight": 0.35,
+      "contribution": 17.5
+    },
+    {
+      "key": "treasury_agency_to_runnable",
+      "label": "Treasury-agency / runnable funding",
+      "weight": 0.35,
+      "contribution": 21.453811908736785
+    },
+    {
+      "key": "hqla_narrow_lower_to_runnable",
+      "label": "Narrow HQLA / runnable funding",
+      "weight": 0.3,
+      "contribution": 18.814691151919867
+    }
+  ],
+  "composite_components": [
+    {
+      "key": "run_risk_index",
+      "label": "Run Risk Index",
+      "weight": 0.4,
+      "score": 5.359056806002144,
+      "contribution": 2.1436227224008575
+    },
+    {
+      "key": "alm_mismatch_index",
+      "label": "ALM Mismatch Index",
+      "weight": 0.4,
+      "score": 32.08177620558118,
+      "contribution": 12.832710482232471
+    },
+    {
+      "key": "inverse_treasury_buffer_index",
+      "label": "Inverse Treasury Buffer",
+      "weight": 0.2,
+      "score": 42.23149693934335,
+      "contribution": 8.44629938786867
+    }
+  ],
+  "supervised_outflow_score": 0.3124675171150789,
+  "treasury_yield_date": "2023-03-31",
+  "has_treasury_yield_history": 1,
+  "yc_2yr": 4.06,
+  "yc_10yr": 3.48,
+  "yc_10y_3m_slope_bp": -136.99999999999997,
+  "yc_10y_2y_slope_bp": -57.999999999999964,
+  "yc_10yr_qoq_change_bp": -39.99999999999999,
+  "has_ffiec_features": 1,
+  "has_sod_features": 1,
+  "index_version": "v1_ffiec_hybrid",
+  "failed": false,
+  "fail_date": null
+}

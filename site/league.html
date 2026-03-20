@@ -18,7 +18,7 @@
 
   <header class="header" id="header">
     <div class="container header-inner">
-      <a href="/" class="logo">bank<span class="logo-accent">ALM</span></a>
+      <a href="index.html" class="logo">bank<span class="logo-accent">ALM</span></a>
       <nav class="nav" id="nav">
         <a href="index.html#indices" class="nav-link">Indices</a>
         <a href="index.html#results" class="nav-link">Results</a>
@@ -31,7 +31,7 @@
       </nav>
       <div class="header-actions">
         <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
-        <button class="hamburger" id="hamburger" onclick="document.getElementById('nav').classList.toggle('open')" aria-label="Menu">
+        <button class="hamburger" id="hamburger" aria-label="Menu" aria-controls="nav" aria-expanded="false">
           <span></span><span></span><span></span>
         </button>
       </div>
@@ -83,6 +83,7 @@
         </div>
         <div class="domain-filters" id="peer-filters"></div>
         <div class="filter-bar">
+          <label for="table-search" class="sr-only">Search banks in the league table</label>
           <input type="text" class="search-input" id="table-search" placeholder="Search banks..." autocomplete="off">
           <span class="result-count" id="result-count"></span>
         </div>
@@ -90,17 +91,18 @@
           <table class="data-table" id="league-table">
             <thead>
               <tr>
-                <th data-sort="rank">Rank <span class="sort-icon">&udarr;</span></th>
-                <th data-sort="name">Bank <span class="sort-icon">&udarr;</span></th>
-                <th data-sort="score" class="sort-desc">Score <span class="sort-icon">&udarr;</span></th>
-                <th data-sort="peer_group">Peer Group <span class="sort-icon">&udarr;</span></th>
-                <th data-sort="assets">Assets ($B) <span class="sort-icon">&udarr;</span></th>
-                <th data-sort="uninsured_pct">Uninsured % <span class="sort-icon">&udarr;</span></th>
-                <th data-sort="state">State <span class="sort-icon">&udarr;</span></th>
+                <th scope="col" data-sort="rank" aria-sort="none"><button type="button" class="sort-button" data-sort-button>Rank <span class="sort-icon">&udarr;</span></button></th>
+                <th scope="col" data-sort="name" aria-sort="none"><button type="button" class="sort-button" data-sort-button>Bank <span class="sort-icon">&udarr;</span></button></th>
+                <th scope="col" data-sort="score" class="sort-desc" aria-sort="descending"><button type="button" class="sort-button" data-sort-button>Score <span class="sort-icon">&udarr;</span></button></th>
+                <th scope="col" data-sort="peer_group" aria-sort="none"><button type="button" class="sort-button" data-sort-button>Peer Group <span class="sort-icon">&udarr;</span></button></th>
+                <th scope="col" data-sort="assets" aria-sort="none"><button type="button" class="sort-button" data-sort-button>Assets ($B) <span class="sort-icon">&udarr;</span></button></th>
+                <th scope="col" data-sort="uninsured_pct" aria-sort="none"><button type="button" class="sort-button" data-sort-button>Uninsured % <span class="sort-icon">&udarr;</span></button></th>
+                <th scope="col" data-sort="state" aria-sort="none"><button type="button" class="sort-button" data-sort-button>State <span class="sort-icon">&udarr;</span></button></th>
+                <th class="bank-link-col">Open</th>
               </tr>
             </thead>
             <tbody id="league-tbody">
-              <tr><td colspan="7" class="table-empty">Loading banks...</td></tr>
+              <tr><td colspan="8" class="table-empty">Loading banks...</td></tr>
             </tbody>
           </table>
         </div>
@@ -116,7 +118,7 @@
   <footer class="footer">
     <div class="container footer-inner">
       <div class="footer-brand">
-        <span class="logo">bank<span class="logo-accent">ALM</span></span>
+        <a href="index.html" class="logo">bank<span class="logo-accent">ALM</span></a>
         <p class="footer-tagline">U.S. Bank Fragility Atlas</p>
       </div>
       <div class="footer-nav">

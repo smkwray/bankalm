@@ -68,6 +68,7 @@ def test_build_metrics_table_includes_episode_and_horizon_slices() -> None:
         "RUN_RISK_INDEX": [90.0, 10.0, 85.0, 20.0],
         "FUNDING_FRAGILITY_INDEX": [88.0, 12.0, 84.0, 22.0],
         "ALM_MISMATCH_INDEX": [70.0, 30.0, 65.0, 35.0],
+        "DEPOSIT_COMPETITION_PRESSURE_INDEX": [75.0, 25.0, 72.0, 28.0],
         "FAIL_WITHIN_1Q": [1, 0, 1, 0],
         "FAIL_WITHIN_2Q": [1, 0, 1, 0],
         "FAIL_WITHIN_4Q": [1, 0, 1, 0],
@@ -78,4 +79,9 @@ def test_build_metrics_table_includes_episode_and_horizon_slices() -> None:
     metrics = build_metrics_table(df)
     full_sample = metrics[(metrics["SLICE"] == "full_sample") & (metrics["HORIZON_QUARTERS"] == 1)]
     assert not full_sample.empty
-    assert set(full_sample["SCORE_COL"]) >= {"RUN_RISK_INDEX", "FUNDING_FRAGILITY_INDEX", "ALM_MISMATCH_INDEX"}
+    assert set(full_sample["SCORE_COL"]) >= {
+        "RUN_RISK_INDEX",
+        "FUNDING_FRAGILITY_INDEX",
+        "ALM_MISMATCH_INDEX",
+        "DEPOSIT_COMPETITION_PRESSURE_INDEX",
+    }

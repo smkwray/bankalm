@@ -82,12 +82,19 @@ def test_write_site_exports_generates_manifest_and_league_json(tmp_path) -> None
         "RECALL_AT_20PCT": [0.50, 0.20, 0.40],
     })
 
+    banks_dir = tmp_path / "banks"
+    banks_dir.mkdir()
+    (banks_dir / "stale.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "league.json").write_text("[]", encoding="utf-8")
+
     write_site_exports(mart, tmp_path, validation_metrics=metrics)
 
     manifest = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
-    league = json.loads((tmp_path / "league.json").read_text(encoding="utf-8"))
+    latest = json.loads((tmp_path / "banks" / "latest.json").read_text(encoding="utf-8"))
+    detail = json.loads((tmp_path / "banks" / "100.json").read_text(encoding="utf-8"))
 
     assert manifest["pipeline"]["bank_quarters"] == 2
+    assert manifest["schema_version"] == 3
     assert manifest["pipeline"]["failures_tested"] == 12
     assert manifest["indices"][0]["headline_horizon_quarters"] == 4
     assert manifest["site_panel"] == "recent_history_enriched"
@@ -95,20 +102,30 @@ def test_write_site_exports_generates_manifest_and_league_json(tmp_path) -> None
     assert manifest["published_panels"]["recent_history_enriched"]["bank_quarters"] == 2
     assert manifest["treasury_regime"]["yield_date"] == "2024-03-29"
     assert manifest["treasury_regime"]["y10"] == 4.2
+    assert manifest["freshness"]["site_snapshot_as_of"] == "2024-03-31"
+    assert manifest["freshness"]["source_max_dates"]["fdic_financials"] == "2024-03-31"
+    assert manifest["freshness"]["source_max_dates"]["ffiec"] == "2024-03-31"
+    assert manifest["freshness"]["source_max_dates"]["sod"] == "2023-06-30"
+    assert manifest["freshness"]["source_max_dates"]["treasury"] == "2024-03-29"
+    assert isinstance(manifest["freshness"]["stale"], bool)
+    assert any(idx["validation_status"] == "not_backtested_yet" for idx in manifest["indices"] if idx["id"] == "deposit_competition")
     assert "run_risk" in manifest["index_methodology"]
     assert "deposit_competition" in manifest["index_methodology"]
     assert manifest["index_methodology"]["funding_fragility"]["components"][0]["label"] == "Run Risk Index"
     assert any(idx["id"] == "deposit_competition" for idx in manifest["indices"])
-    assert league[0]["name"] == "Bank A"
-    assert league[0]["funding_fragility"] == 75.0
-    assert league[0]["deposit_competition"] == 68.0
-    assert league[0]["peer_group_bank_count"] == 1
-    assert league[0]["treasury_yield_date"] == "2024-03-29"
-    assert league[0]["yc_10yr"] == 4.2
-    assert league[0]["run_risk_components"][0]["label"] == "Uninsured deposits"
-    assert league[0]["deposit_competition_components"][0]["label"] == "Outside-option premium"
-    assert league[0]["alm_components"][0]["label"] == "Long-term assets / stable funding"
-    assert league[0]["composite_components"][0]["label"] == "Run Risk Index"
+    assert latest[0]["name"] == "Bank A"
+    assert latest[0]["funding_fragility"] == 75.0
+    assert latest[0]["deposit_competition"] == 68.0
+    assert latest[0]["peer_group_bank_count"] == 1
+    assert detail["treasury_yield_date"] == "2024-03-29"
+    assert detail["yc_10yr"] == 4.2
+    assert detail["run_risk_components"][0]["label"] == "Uninsured deposits"
+    assert detail["deposit_competition_components"][0]["label"] == "Outside-option premium"
+    assert detail["alm_components"][0]["label"] == "Long-term assets / stable funding"
+    assert detail["composite_components"][0]["label"] == "Run Risk Index"
+    assert "deposit_competition_pressure" not in detail
+    assert not (tmp_path / "league.json").exists()
+    assert not (tmp_path / "banks" / "stale.json").exists()
 
 
 def test_split_publishable_panels_creates_full_history_core_and_recent_enriched() -> None:

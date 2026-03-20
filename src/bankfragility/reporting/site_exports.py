@@ -390,6 +390,59 @@ def _metric_row(validation_metrics: pd.DataFrame | None, score_col: str, horizon
     return rows.iloc[0]
 
 
+def _latest_completed_quarter_end(reference: datetime) -> pd.Timestamp:
+    quarter_start_month = ((reference.month - 1) // 3) * 3 + 1
+    current_quarter_start = pd.Timestamp(datetime(reference.year, quarter_start_month, 1, tzinfo=UTC))
+    return (current_quarter_start - pd.Timedelta(days=1)).normalize().tz_localize(None)
+
+
+def _max_repdte_for_flag(mart: pd.DataFrame, column: str) -> pd.Timestamp | None:
+    if column not in mart.columns:
+        return None
+    flag = pd.to_numeric(mart[column], errors="coerce").fillna(0).astype(int) > 0
+    if not flag.any():
+        return None
+    return pd.to_datetime(mart.loc[flag, "REPDTE"]).max()
+
+
+def _sod_snapshot_date(repdte: pd.Timestamp | None) -> pd.Timestamp | None:
+    if repdte is None or pd.isna(repdte):
+        return None
+    year = repdte.year if repdte.month >= 6 else repdte.year - 1
+    return pd.Timestamp(year=year, month=6, day=30)
+
+
+def build_manifest_freshness(mart: pd.DataFrame, generated_at: datetime) -> dict[str, Any]:
+    site_snapshot_as_of = pd.to_datetime(mart["REPDTE"]).max() if not mart.empty else None
+    source_max_dates = {
+        "fdic_financials": _json_safe(site_snapshot_as_of),
+        "ffiec": _json_safe(_max_repdte_for_flag(mart, "HAS_FFIEC_FEATURES")),
+        "sod": _json_safe(_sod_snapshot_date(_max_repdte_for_flag(mart, "HAS_SOD_FEATURES"))),
+        "treasury": _json_safe(
+            pd.to_datetime(mart["TREASURY_YIELD_DATE"]).max()
+            if "TREASURY_YIELD_DATE" in mart.columns and mart["TREASURY_YIELD_DATE"].notna().any()
+            else None
+        ),
+    }
+    coverage_warnings: list[str] = []
+    for source, max_date in source_max_dates.items():
+        if max_date is None:
+            coverage_warnings.append(f"{source} coverage is unavailable for the published site snapshot.")
+            continue
+        if site_snapshot_as_of is not None and pd.Timestamp(max_date) < site_snapshot_as_of:
+            coverage_warnings.append(
+                f"{source} coverage trails the published site snapshot ({max_date} vs {_json_safe(site_snapshot_as_of)})."
+            )
+    stale = site_snapshot_as_of is None or site_snapshot_as_of < _latest_completed_quarter_end(generated_at)
+    return {
+        "site_snapshot_as_of": _json_safe(site_snapshot_as_of),
+        "generated_at": generated_at.replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "source_max_dates": source_max_dates,
+        "coverage_warnings": coverage_warnings,
+        "stale": bool(stale),
+    }
+
+
 def build_site_manifest(
     mart: pd.DataFrame,
     full_history_core: pd.DataFrame | None = None,
@@ -398,7 +451,8 @@ def build_site_manifest(
     headline_horizon_quarters: int = 4,
 ) -> dict[str, Any]:
     latest = latest_bank_snapshot(mart)
-    generated_at = datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    generated_at = datetime.now(UTC).replace(microsecond=0)
+    freshness = build_manifest_freshness(mart, generated_at)
 
     run_risk_metric = _metric_row(validation_metrics, "RUN_RISK_INDEX", headline_horizon_quarters)
     failures_tested = int(run_risk_metric["N_FAILURES"]) if run_risk_metric is not None and pd.notna(run_risk_metric["N_FAILURES"]) else 0
@@ -417,6 +471,12 @@ def build_site_manifest(
                 "failure_recall_20": _json_safe(row["RECALL_AT_20PCT"]) if row is not None else None,
                 "bank_count": int(latest["CERT"].nunique()),
                 "headline_horizon_quarters": headline_horizon_quarters,
+                "validation_status": "backtested" if row is not None else "not_backtested_yet",
+                "status_note": (
+                    f"Quarter-aligned failure backtest available at the {headline_horizon_quarters}-quarter horizon."
+                    if row is not None
+                    else "Experimental index. No failure backtest has been published yet."
+                ),
                 "top_banks": [
                     {
                         "name": _json_safe(b.get("NAMEFULL")),
@@ -460,8 +520,9 @@ def build_site_manifest(
         }
 
     return {
-        "schema_version": 2,
-        "generated_at": generated_at,
+        "schema_version": 3,
+        "generated_at": freshness["generated_at"],
+        "freshness": freshness,
         "pipeline": {
             "bank_quarters": int(len(mart)),
             "unique_banks": int(mart["CERT"].nunique()),
@@ -527,7 +588,6 @@ def build_league_rows(mart: pd.DataFrame) -> list[dict[str, Any]]:
                 "alm_mismatch": _json_safe(row.get("ALM_MISMATCH_INDEX")),
                 "treasury_buffer": _json_safe(row.get("TREASURY_BUFFER_INDEX")),
                 "deposit_competition": _json_safe(row.get("DEPOSIT_COMPETITION_PRESSURE_INDEX")),
-                "deposit_competition_pressure": _json_safe(row.get("DEPOSIT_COMPETITION_PRESSURE_INDEX")),
                 "deposit_competition_resilience": _json_safe(row.get("DEPOSIT_COMPETITION_RESILIENCE_INDEX")),
                 "deposit_competition_score": _json_safe(row.get("DEPOSIT_COMPETITION_PRESSURE_SCORE")),
                 "funding_fragility": _json_safe(row.get("FUNDING_FRAGILITY_INDEX")),
@@ -554,6 +614,27 @@ def build_league_rows(mart: pd.DataFrame) -> list[dict[str, Any]]:
     return rows
 
 
+def build_bank_summary_rows(mart: pd.DataFrame) -> list[dict[str, Any]]:
+    detail_rows = build_league_rows(mart)
+    summary_fields = [
+        "cert",
+        "name",
+        "peer_group",
+        "peer_group_bank_count",
+        "assets",
+        "deposits",
+        "uninsured_pct",
+        "state",
+        "repdte",
+        "run_risk",
+        "alm_mismatch",
+        "treasury_buffer",
+        "deposit_competition",
+        "funding_fragility",
+    ]
+    return [{field: row.get(field) for field in summary_fields} for row in detail_rows]
+
+
 def write_site_exports(
     mart: pd.DataFrame,
     site_dir: str | Path,
@@ -578,7 +659,21 @@ def write_site_exports(
         validation_metrics=validation_metrics,
         headline_horizon_quarters=headline_horizon_quarters,
     )
-    league_rows = build_league_rows(site_mart)
+    bank_detail_rows = build_league_rows(site_mart)
+    bank_summary_rows = build_bank_summary_rows(site_mart)
+    banks_dir = site_dir / "banks"
+    banks_dir.mkdir(parents=True, exist_ok=True)
+
+    for stale_file in banks_dir.glob("*.json"):
+        stale_file.unlink()
+    legacy_league = site_dir / "league.json"
+    if legacy_league.exists():
+        legacy_league.unlink()
 
     (site_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    (site_dir / "league.json").write_text(json.dumps(league_rows, indent=2), encoding="utf-8")
+    (banks_dir / "latest.json").write_text(json.dumps(bank_summary_rows, indent=2), encoding="utf-8")
+    for row in bank_detail_rows:
+        cert = row.get("cert")
+        if cert is None:
+            continue
+        (banks_dir / f"{cert}.json").write_text(json.dumps(row, indent=2), encoding="utf-8")

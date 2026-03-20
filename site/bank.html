@@ -18,7 +18,7 @@
 
   <header class="header" id="header">
     <div class="container header-inner">
-      <a href="/" class="logo">bank<span class="logo-accent">ALM</span></a>
+      <a href="index.html" class="logo">bank<span class="logo-accent">ALM</span></a>
       <nav class="nav" id="nav">
         <a href="index.html#indices" class="nav-link">Indices</a>
         <a href="index.html#results" class="nav-link">Results</a>
@@ -31,7 +31,7 @@
       </nav>
       <div class="header-actions">
         <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
-        <button class="hamburger" id="hamburger" onclick="document.getElementById('nav').classList.toggle('open')" aria-label="Menu">
+        <button class="hamburger" id="hamburger" aria-label="Menu" aria-controls="nav" aria-expanded="false">
           <span></span><span></span><span></span>
         </button>
       </div>
@@ -127,7 +127,7 @@
   <footer class="footer">
     <div class="container footer-inner">
       <div class="footer-brand">
-        <span class="logo">bank<span class="logo-accent">ALM</span></span>
+        <a href="index.html" class="logo">bank<span class="logo-accent">ALM</span></a>
         <p class="footer-tagline">U.S. Bank Fragility Atlas</p>
       </div>
       <div class="footer-nav">

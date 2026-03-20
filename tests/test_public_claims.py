@@ -34,3 +34,6 @@ def test_public_docs_describe_proxy_outputs_cautiously() -> None:
     assert "scenario proxies" in readme
     assert "structural public-data proxies" in readme
     assert "scenario proxies" in site_index
+    assert "deposit competition now participates in the same quarter-aligned failure backtest" in readme
+    assert "transparent public-data pressure screen for exploratory comparison" in readme
+    assert "transparent public-data pressure screen rather than a complete funding diagnostic" in readme

@@ -1,6 +1,20 @@
 {
-  "schema_version": 2,
-  "generated_at": "2026-03-20T13:36:49Z",
+  "schema_version": 3,
+  "generated_at": "2026-03-20T15:53:29Z",
+  "freshness": {
+    "site_snapshot_as_of": "2024-12-31",
+    "generated_at": "2026-03-20T15:53:29Z",
+    "source_max_dates": {
+      "fdic_financials": "2024-12-31",
+      "ffiec": "2024-12-31",
+      "sod": "2024-06-30",
+      "treasury": "2024-12-31"
+    },
+    "coverage_warnings": [
+      "sod coverage trails the published site snapshot (2024-06-30 vs 2024-12-31)."
+    ],
+    "stale": true
+  },
   "pipeline": {
     "bank_quarters": 96894,
     "unique_banks": 5237,
@@ -40,6 +54,8 @@
       "failure_recall_20": 0.5925258892390814,
       "bank_count": 5237,
       "headline_horizon_quarters": 4,
+      "validation_status": "backtested",
+      "status_note": "Quarter-aligned failure backtest available at the 4-quarter horizon.",
       "top_banks": [
         {
           "name": "Capital One Bank (USA), National Association",
@@ -70,6 +86,8 @@
       "failure_recall_20": 0.2593426384511481,
       "bank_count": 5237,
       "headline_horizon_quarters": 4,
+      "validation_status": "backtested",
+      "status_note": "Quarter-aligned failure backtest available at the 4-quarter horizon.",
       "top_banks": [
         {
           "name": "Luana Savings Bank",
@@ -96,10 +114,12 @@
       "title": "Deposit Competition Index",
       "accent": "emerald",
       "description": "Peer-normalized pressure from safe outside options, deposit pass-through gaps, and rate-sensitive funding exposure.",
-      "failure_auc": null,
-      "failure_recall_20": null,
+      "failure_auc": 0.7202689374319198,
+      "failure_recall_20": 0.539846915803692,
       "bank_count": 5237,
       "headline_horizon_quarters": 4,
+      "validation_status": "backtested",
+      "status_note": "Quarter-aligned failure backtest available at the 4-quarter horizon.",
       "top_banks": [
         {
           "name": "Sutton Bank",
@@ -130,6 +150,8 @@
       "failure_recall_20": 0.5078793336334985,
       "bank_count": 5237,
       "headline_horizon_quarters": 4,
+      "validation_status": "backtested",
+      "status_note": "Quarter-aligned failure backtest available at the 4-quarter horizon.",
       "top_banks": [
         {
           "name": "The Farmers & Merchants Bank",
