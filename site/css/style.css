@@ -944,6 +944,11 @@ strong { font-weight: 600; }
 }
 .freshness-banner.is-stale {
   background: color-mix(in srgb, var(--danger-subtle, #fff1f2) 75%, var(--bg-raised));
+  border-left: 4px solid var(--risk-critical, #ef4444);
+}
+.freshness-stale-note {
+  font-weight: 600;
+  color: var(--risk-high, #f97316);
 }
 .freshness-banner-inner {
   display: flex;
@@ -1406,4 +1411,31 @@ strong { font-weight: 600; }
 @media (max-width: 480px) {
   .metrics-grid { grid-template-columns: 1fr; }
   .metric-card { border-right: none; }
+}
+
+/* ── Coverage Badges ─────────────────────── */
+.coverage-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+.version-badge {
+  background: var(--accent-subtle, #e0e7ff);
+  color: var(--accent-text, #4338ca);
+}
+.coverage-warning-badge {
+  background: color-mix(in srgb, var(--danger-subtle, #fff1f2) 75%, var(--bg-raised));
+  color: var(--risk-high, #f97316);
+}
+
+/* ── Driver Explanation ──────────────────── */
+.driver-explanation {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
 }

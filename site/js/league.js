@@ -90,6 +90,12 @@ function renderFreshnessBanner(manifest) {
     warning.textContent = freshness.coverage_warnings[0];
     inner.appendChild(warning);
   }
+  if (freshness.stale) {
+    var staleNote = document.createElement('span');
+    staleNote.className = 'freshness-stale-note';
+    staleNote.textContent = 'Newer data may be available.';
+    inner.appendChild(staleNote);
+  }
   banner.appendChild(inner);
   header.parentNode.insertBefore(banner, header.nextSibling);
 }

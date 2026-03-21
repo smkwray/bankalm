@@ -9,7 +9,7 @@ RAW     := data/raw
 PROC    := data/processed
 REPORTS := data/reports
 
-.PHONY: help test clean download-all download-market-rates build-all build-deposit-competition reports universe validate smoke status backtest-failures
+.PHONY: help test clean download-all download-market-rates download-market-rates-if-key build-all build-deposit-competition reports universe validate smoke status backtest-failures
 
 help:
 	@echo "Main targets:"
@@ -95,7 +95,18 @@ download-market-rates:
 		--series-id RRPONTSYAWARD \
 		--out $(RAW)/macro/fred_rates.parquet
 
-download-all: download-financials download-institutions download-sod download-ffiec download-failures download-treasury
+download-market-rates-if-key:
+	@if [ -n "$$FRED_API_KEY" ]; then \
+		echo "FRED_API_KEY detected, downloading market rates..."; \
+		$(PYTHON) scripts/download_fred_series.py \
+			--series-id IORB \
+			--series-id RRPONTSYAWARD \
+			--out $(RAW)/macro/fred_rates.parquet; \
+	else \
+		echo "FRED_API_KEY not set, skipping market-rate download (deposit competition will use Treasury-only inputs)."; \
+	fi
+
+download-all: download-financials download-institutions download-sod download-ffiec download-failures download-treasury download-market-rates-if-key
 
 # ──────────────────────── FFIEC Extraction ────────────────────────
 extract-ffiec:

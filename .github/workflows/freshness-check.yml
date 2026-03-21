@@ -1,0 +1,60 @@
+name: Freshness Check
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check manifest freshness
+        id: freshness
+        run: |
+          STALE=$(python3 -c "
+          import json
+          m = json.load(open('site/data/manifest.json'))
+          print(m.get('freshness', {}).get('stale', False))
+          ")
+          SNAPSHOT=$(python3 -c "
+          import json
+          m = json.load(open('site/data/manifest.json'))
+          print(m.get('freshness', {}).get('site_snapshot_as_of', 'unknown'))
+          ")
+          echo "stale=$STALE" >> "$GITHUB_OUTPUT"
+          echo "snapshot=$SNAPSHOT" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update freshness issue
+        if: steps.freshness.outputs.stale == 'True'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'Data freshness: site snapshot is stale';
+            const snapshot = '${{ steps.freshness.outputs.snapshot }}';
+            const body = [
+              `The site manifest reports data as of **${snapshot}**, which is behind the latest completed quarter.`,
+              '',
+              'Run `make universe` to refresh data and `make reports` to regenerate site exports.',
+            ].join('\n');
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'data-freshness',
+            });
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['data-freshness'],
+              });
+            }

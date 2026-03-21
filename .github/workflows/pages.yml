@@ -23,6 +23,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check data freshness
+        if: github.event_name == 'push'
+        run: |
+          STALE=$(python3 -c "import json; m=json.load(open('site/data/manifest.json')); print(m.get('freshness',{}).get('stale',False))")
+          if [ "$STALE" = "True" ]; then
+            echo "::warning::Site data is stale (manifest.freshness.stale=true). Data as of $(python3 -c "import json; m=json.load(open('site/data/manifest.json')); print(m.get('freshness',{}).get('site_snapshot_as_of','unknown'))")."
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

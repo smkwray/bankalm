@@ -133,6 +133,7 @@ function renderFreshnessBanner(manifest) {
       '<strong>Data as of ' + escapeHtml(asOf) + '</strong>' +
       (freshness.generated_at ? '<span class="freshness-build">Built ' + escapeHtml(freshness.generated_at.slice(0, 10)) + '</span>' : '') +
       (warnings.length > 0 ? '<span class="freshness-warning">' + escapeHtml(warnings[0]) + '</span>' : '') +
+      (freshness.stale ? '<span class="freshness-stale-note">Newer data may be available.</span>' : '') +
     '</div>';
   header.parentNode.insertBefore(banner, header.nextSibling);
 }
@@ -231,8 +232,18 @@ function renderScoreConstruction(bank, manifest) {
     var top = (Array.isArray(bank.composite_components) ? bank.composite_components.slice() : [])
       .sort(function (a, b) { return (b.contribution || 0) - (a.contribution || 0); })
       .slice(0, 3);
+    var explanationHtml = '';
+    if (top.length > 0) {
+      var composite = bank.funding_fragility != null ? bank.funding_fragility : 0;
+      var tier = composite >= 80 ? 'very high' : composite >= 60 ? 'elevated' : composite >= 40 ? 'moderate' : 'low';
+      var topLabels = top.map(function (c) { return c.label; });
+      explanationHtml = '<p class="driver-explanation">This bank has ' + tier + ' composite fragility, primarily driven by ' +
+        topLabels.slice(0, 2).join(' and ') +
+        (topLabels.length > 2 ? ', with additional contribution from ' + topLabels[2] : '') + '.</p>';
+    }
     drivers.innerHTML =
       '<h4>Top composite drivers</h4>' +
+      explanationHtml +
       (top.length === 0
         ? '<p class="breakdown-card-note">Composite driver detail unavailable for this bank-quarter.</p>'
         : '<div class="driver-list">' + top.map(function (component) {
@@ -260,6 +271,29 @@ function renderBank(bank, manifest) {
   }
   document.getElementById('bank-title').textContent = b.name;
   document.getElementById('bank-peer').textContent = fmtPeerGroup(b.peer_group);
+
+  // Coverage / version badges
+  var peerEl = document.getElementById('bank-peer');
+  if (peerEl && peerEl.parentNode) {
+    if (b.index_version) {
+      var vBadge = document.createElement('span');
+      vBadge.className = 'coverage-badge version-badge';
+      vBadge.textContent = b.index_version === 'v1_ffiec_hybrid' ? 'FFIEC+FDIC' : 'FDIC only';
+      peerEl.parentNode.insertBefore(vBadge, peerEl.nextSibling);
+    }
+    if (b.has_sod_features === 0) {
+      var sBadge = document.createElement('span');
+      sBadge.className = 'coverage-badge coverage-warning-badge';
+      sBadge.textContent = 'No SOD data';
+      peerEl.parentNode.appendChild(sBadge);
+    }
+    if (b.has_ffiec_features === 0) {
+      var fBadge = document.createElement('span');
+      fBadge.className = 'coverage-badge coverage-warning-badge';
+      fBadge.textContent = 'No FFIEC data';
+      peerEl.parentNode.appendChild(fBadge);
+    }
+  }
 
   var composite = b.funding_fragility != null ? b.funding_fragility : 0;
   var rc = riskClass(composite);
@@ -318,6 +352,9 @@ function renderBank(bank, manifest) {
       ['ALM Mismatch', (b.alm_mismatch || 0).toFixed(1)],
       ['Deposit Competition', competitionScore(b) != null ? competitionScore(b).toFixed(1) : '\u2014'],
       ['Composite Fragility', (b.funding_fragility != null ? b.funding_fragility : 0).toFixed(1)],
+      ['Data Layer', b.index_version || '\u2014'],
+      ['FFIEC Coverage', b.has_ffiec_features ? 'Yes' : 'No'],
+      ['SOD Coverage', b.has_sod_features ? 'Yes' : 'No'],
       ['Failed', b.failed ? 'Yes (' + b.fail_date + ')' : 'No']
     ];
     meta.innerHTML = items.map(function (r) {

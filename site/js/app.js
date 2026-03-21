@@ -156,6 +156,7 @@ function renderFreshnessBanner(manifest) {
       '<strong>Data as of ' + escapeHtml(asOf) + '</strong>' +
       (freshness.generated_at ? '<span class="freshness-build">Built ' + escapeHtml(formatBuildDate(freshness.generated_at)) + '</span>' : '') +
       (warnings.length > 0 ? '<span class="freshness-warning">' + escapeHtml(warnings[0]) + '</span>' : '') +
+      (freshness.stale ? '<span class="freshness-stale-note">Newer data may be available.</span>' : '') +
     '</div>';
   header.parentNode.insertBefore(banner, header.nextSibling);
 }
