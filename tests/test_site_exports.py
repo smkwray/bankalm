@@ -124,8 +124,37 @@ def test_write_site_exports_generates_manifest_and_league_json(tmp_path) -> None
     assert detail["alm_components"][0]["label"] == "Long-term assets / stable funding"
     assert detail["composite_components"][0]["label"] == "Run Risk Index"
     assert "deposit_competition_pressure" not in detail
+    assert detail["failed"] is False
+    assert detail["fail_date"] is None
     assert not (tmp_path / "league.json").exists()
     assert not (tmp_path / "banks" / "stale.json").exists()
+
+
+def test_write_site_exports_wires_failure_flags(tmp_path) -> None:
+    mart = pd.DataFrame({
+        "CERT": ["100", "200"],
+        "REPDTE": pd.to_datetime(["2024-03-31", "2024-03-31"]),
+        "NAMEFULL": ["Failed Bank", "Survivor Bank"],
+        "PEER_GROUP": ["community", "community"],
+        "ASSET": [500.0, 800.0],
+        "DEPDOM": [300.0, 450.0],
+        "RUN_RISK_INDEX": [80.0, 40.0],
+        "FUNDING_FRAGILITY_INDEX": [75.0, 35.0],
+    })
+    failures = pd.DataFrame({
+        "CERT": [100.0, 999.0],
+        "FAILDATE": ["3/10/2023", "1/15/2020"],
+        "NAME": ["Failed Bank", "Other Bank"],
+    })
+
+    write_site_exports(mart, tmp_path, failures=failures)
+
+    detail_100 = json.loads((tmp_path / "banks" / "100.json").read_text(encoding="utf-8"))
+    detail_200 = json.loads((tmp_path / "banks" / "200.json").read_text(encoding="utf-8"))
+    assert detail_100["failed"] is True
+    assert detail_100["fail_date"] == "2023-03-10"
+    assert detail_200["failed"] is False
+    assert detail_200["fail_date"] is None
 
 
 def test_split_publishable_panels_creates_full_history_core_and_recent_enriched() -> None:

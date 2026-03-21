@@ -557,10 +557,23 @@ def build_site_manifest(
     }
 
 
-def build_league_rows(mart: pd.DataFrame) -> list[dict[str, Any]]:
+def _build_failure_lookup(failures: pd.DataFrame | None) -> dict[str, str]:
+    """Build CERT → FAILDATE string lookup from raw failures DataFrame."""
+    if failures is None or failures.empty:
+        return {}
+    fail = failures.copy()
+    fail["CERT_STR"] = pd.to_numeric(fail["CERT"], errors="coerce").dropna().astype(int).astype(str)
+    fail["FAILDATE"] = pd.to_datetime(fail["FAILDATE"], errors="coerce")
+    fail = fail.dropna(subset=["CERT_STR", "FAILDATE"])
+    fail = fail.sort_values("FAILDATE").drop_duplicates(subset=["CERT_STR"], keep="last")
+    return dict(zip(fail["CERT_STR"], fail["FAILDATE"].dt.strftime("%Y-%m-%d")))
+
+
+def build_league_rows(mart: pd.DataFrame, failures: pd.DataFrame | None = None) -> list[dict[str, Any]]:
     latest = latest_bank_snapshot(mart)
     latest = latest.sort_values("FUNDING_FRAGILITY_INDEX", ascending=False) if "FUNDING_FRAGILITY_INDEX" in latest.columns else latest
     peer_group_sizes = latest["PEER_GROUP"].fillna("unassigned").value_counts().to_dict() if "PEER_GROUP" in latest.columns else {}
+    failure_lookup = _build_failure_lookup(failures)
 
     rows: list[dict[str, Any]] = []
     for _, row in latest.iterrows():
@@ -607,15 +620,15 @@ def build_league_rows(mart: pd.DataFrame) -> list[dict[str, Any]]:
                 "has_ffiec_features": _json_safe(row.get("HAS_FFIEC_FEATURES")),
                 "has_sod_features": _json_safe(row.get("HAS_SOD_FEATURES")),
                 "index_version": _json_safe(row.get("INDEX_VERSION")),
-                "failed": False,
-                "fail_date": None,
+                "failed": str(row.get("CERT")) in failure_lookup,
+                "fail_date": failure_lookup.get(str(row.get("CERT"))),
             }
         )
     return rows
 
 
-def build_bank_summary_rows(mart: pd.DataFrame) -> list[dict[str, Any]]:
-    detail_rows = build_league_rows(mart)
+def build_bank_summary_rows(mart: pd.DataFrame, failures: pd.DataFrame | None = None) -> list[dict[str, Any]]:
+    detail_rows = build_league_rows(mart, failures=failures)
     summary_fields = [
         "cert",
         "name",
@@ -642,6 +655,7 @@ def write_site_exports(
     recent_history_enriched: pd.DataFrame | None = None,
     validation_metrics: pd.DataFrame | None = None,
     headline_horizon_quarters: int = 4,
+    failures: pd.DataFrame | None = None,
 ) -> None:
     site_dir = Path(site_dir)
     site_dir.mkdir(parents=True, exist_ok=True)
@@ -659,8 +673,8 @@ def write_site_exports(
         validation_metrics=validation_metrics,
         headline_horizon_quarters=headline_horizon_quarters,
     )
-    bank_detail_rows = build_league_rows(site_mart)
-    bank_summary_rows = build_bank_summary_rows(site_mart)
+    bank_detail_rows = build_league_rows(site_mart, failures=failures)
+    bank_summary_rows = build_bank_summary_rows(site_mart, failures=failures)
     banks_dir = site_dir / "banks"
     banks_dir.mkdir(parents=True, exist_ok=True)
 

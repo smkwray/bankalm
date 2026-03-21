@@ -34,6 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--core-panel-out", type=Path, help="Optional full-history core panel parquet path")
     parser.add_argument("--enriched-panel-out", type=Path, help="Optional recent-history enriched panel parquet path")
     parser.add_argument("--site-dir", type=Path, help="Optional site/data output directory")
+    parser.add_argument("--failures", type=Path, help="Optional FDIC failures parquet for site exports")
     parser.add_argument("--cert", type=str, help="Optional: single CERT for drill-down report")
     parser.add_argument("--quarter", type=str, help="Optional: YYYYMMDD for league table")
     return parser.parse_args()
@@ -285,12 +286,14 @@ def run_reports(args: argparse.Namespace) -> None:
         print(f"Generated {reports_generated} reports in {args.out_dir}", file=sys.stderr)
 
     if args.site_dir:
+        failures = read_table(args.failures) if args.failures and args.failures.exists() else None
         write_site_exports(
             df,
             args.site_dir,
             full_history_core=core_panel,
             recent_history_enriched=enriched_panel,
             validation_metrics=metrics,
+            failures=failures,
         )
         print(f"Site exports written to {args.site_dir}", file=sys.stderr)
 

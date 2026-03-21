@@ -208,6 +208,7 @@ reports: build-all backtest-failures
 		--indices $(PROC)/universe_bank_indices.parquet \
 		--supervised $(PROC)/universe_supervised_stickiness.parquet \
 		--validation-metrics $(PROC)/universe_failure_backtest_metrics.csv \
+		--failures $(RAW)/fdic/failures.parquet \
 		--mart-out $(PROC)/universe_publishable_mart.parquet \
 		--core-panel-out $(PROC)/universe_core_panel.parquet \
 		--enriched-panel-out $(PROC)/universe_enriched_panel.parquet \
