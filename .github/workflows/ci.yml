@@ -24,13 +24,13 @@ jobs:
       - name: Smoke import check
         run: |
           python -c "
-          from bankfragility.staging.bank_panel import build_panel
-          from bankfragility.features.deposit_stickiness import build_stickiness_features
-          from bankfragility.features.alm_mismatch import build_alm_features
+          from bankfragility.staging.bank_panel import build_bank_panel
+          from bankfragility.features.deposit_stickiness import build_deposit_stickiness_features
+          from bankfragility.features.alm_mismatch import build_alm_mismatch_features
           from bankfragility.features.treasury_extensions import build_treasury_extensions
           from bankfragility.features.deposit_competition import build_deposit_competition_features
           from bankfragility.models.indices import build_indices_frame
-          from bankfragility.models.supervised_stickiness import train_supervised
+          from bankfragility.models.supervised_stickiness import build_supervised_overlay
           from bankfragility.reporting.site_exports import write_site_exports
           from bankfragility.validation.consistency import validate_panel
           print('All module imports OK')
